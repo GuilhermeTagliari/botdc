@@ -518,3 +518,7 @@ client.on('interactionCreate', async (interaction) => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+
+const http = require('http');
+const PORT = process.env.PORT || 3000;
+http.createServer((_, res) => { res.writeHead(200); res.end('ok'); }).listen(PORT);
