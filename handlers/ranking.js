@@ -26,7 +26,7 @@ function lerStats() {
   try { return JSON.parse(fs.readFileSync(ARQUIVO_STATS, 'utf8')); } catch { return null; }
 }
 
-function salvarStats({ vitorias, derrotas, maxStreak, streakAtual, totalVitorias, totalDerrotas, streak }) {
+function salvarStats({ vitorias, derrotas, maxStreak, streakAtual, historico, totalVitorias, totalDerrotas, streak }) {
   const membros = {};
   const todosIds = new Set([...vitorias.keys(), ...derrotas.keys(), ...maxStreak.keys()]);
   for (const id of todosIds) {
@@ -35,6 +35,7 @@ function salvarStats({ vitorias, derrotas, maxStreak, streakAtual, totalVitorias
       derrotas:    derrotas.get(id)    ?? 0,
       maxStreak:   maxStreak.get(id)   ?? 0,
       streakAtual: streakAtual.get(id) ?? 0,
+      historico:   historico.get(id)   ?? [],
     };
   }
   fs.writeFileSync(ARQUIVO_STATS, JSON.stringify({
@@ -110,13 +111,17 @@ async function coletarStats(guild) {
       const participantes = [...listaSection[1].matchAll(/<@(\d+)>/g)].map((m) => m[1]);
       if (participantes.length === 0) continue;
 
+      const nomeMatch = text.match(/⚔️ \*\*Ação:\*\* (.+?)  ·/);
+      const nome      = nomeMatch ? nomeMatch[1] : '—';
+      const ts        = Math.floor(msg.createdTimestamp / 1000);
+
       for (const id of participantes) {
         if (ehVitoria) vitorias.set(id, (vitorias.get(id) ?? 0) + 1);
         else           derrotas.set(id, (derrotas.get(id) ?? 0) + 1);
       }
       if (ehVitoria) totalVitorias++;
       else           totalDerrotas++;
-      acoes.push({ tipo: ehVitoria ? 'vitoria' : 'derrota', participantes });
+      acoes.push({ tipo: ehVitoria ? 'vitoria' : 'derrota', participantes, nome, ts });
     }
 
     lastId = msgs.last()?.id;
@@ -160,7 +165,17 @@ async function coletarStats(guild) {
     }
   }
 
-  const resultado = { vitorias, derrotas, maxStreak, streakAtual, totalVitorias, totalDerrotas, streak };
+  // Histórico por membro (últimas 20 ações, mais novo primeiro)
+  const historico = new Map();
+  for (const acao of acoes) {
+    for (const id of acao.participantes) {
+      if (!historico.has(id)) historico.set(id, []);
+      const h = historico.get(id);
+      if (h.length < 20) h.push({ tipo: acao.tipo, nome: acao.nome ?? '—', ts: acao.ts ?? null });
+    }
+  }
+
+  const resultado = { vitorias, derrotas, maxStreak, streakAtual, historico, totalVitorias, totalDerrotas, streak };
   salvarStats(resultado);
   return resultado;
 }
@@ -237,17 +252,27 @@ async function handleStats(interaction) {
       }
     }
 
-    const dados      = membros[membro.id] ?? { vitorias: 0, derrotas: 0, maxStreak: 0, streakAtual: 0 };
+    const dados      = membros[membro.id] ?? { vitorias: 0, derrotas: 0, maxStreak: 0, streakAtual: 0, historico: [] };
     const v          = dados.vitorias;
     const d          = dados.derrotas;
     const kd         = calcKD(v, d);
     const total      = v + d;
     const melhorStr  = dados.maxStreak   ?? 0;
     const strAtual   = dados.streakAtual ?? 0;
+    const hist       = dados.historico   ?? [];
 
     const rankLista = Object.entries(membros).sort((a, b) => b[1].vitorias - a[1].vitorias);
     const rankIdx   = rankLista.findIndex(([id]) => id === membro.id);
     const posicao   = rankIdx === -1 ? '*Sem posição*' : `#${rankIdx + 1}`;
+
+    const histLinhas = hist.slice(0, 10).map((h) => {
+      const icone = h.tipo === 'vitoria' ? '🏆' : '💀';
+      const data  = h.ts ? `<t:${h.ts}:d>` : '—';
+      return `${icone} ${h.nome} · ${data}`;
+    });
+    const histTexto = histLinhas.length > 0
+      ? `\n**📜 Últimas ações:**\n${histLinhas.join('\n')}\n`
+      : '';
 
     const texto =
       `## 📊 Stats — <@${membro.id}>\n\n` +
@@ -257,7 +282,8 @@ async function handleStats(interaction) {
       `🔥 **Win Streak atual:** ${strAtual}\n` +
       `🏅 **Maior Win Streak:** ${melhorStr}\n` +
       `📋 **Ações participadas:** ${total}\n` +
-      `🎖️ **Posição no ranking:** ${posicao}\n\n` +
+      `🎖️ **Posição no ranking:** ${posicao}\n` +
+      histTexto + '\n' +
       `-# Dados salvos em: ${salvo ? new Date(salvo.atualizadoEm).toLocaleString('pt-BR') : 'agora'}`;
 
     const container = new ContainerBuilder()

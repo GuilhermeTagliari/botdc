@@ -27,6 +27,7 @@ const {
   handleCargo, handleAvisar,
 } = require('./handlers/moderacao');
 const { handleRankingSetup, atualizarRanking, handleStats } = require('./handlers/ranking');
+const { handleHierarquiaSetup, atualizarHierarquia, handleMemberUpdate } = require('./handlers/hierarquia');
 const { handleSorteioCmd, handleSorteioBtn, restaurarSorteios } = require('./handlers/sorteio');
 const { handlePollCmd, handlePollVoto } = require('./handlers/poll');
 const { handleRegrasSetupCmd, handleRegrasModal } = require('./handlers/regras');
@@ -165,7 +166,9 @@ async function registrarComandos(guild) {
         }],
       },
       { name: 'comandos',       description: 'Lista todos os comandos disponíveis do bot' },
-      { name: 'ranking-setup', description: 'Envia a mensagem de ranking no canal configurado', defaultMemberPermissions: '8' },
+      { name: 'ranking-setup',    description: 'Envia a mensagem de ranking no canal configurado',    defaultMemberPermissions: '8' },
+      { name: 'hierarquia-setup', description: 'Envia o painel de hierarquia no canal selecionado', defaultMemberPermissions: '8',
+        options: [{ name: 'canal', description: 'Canal onde o painel será enviado', type: 7, required: true }] },
       {
         name: 'stats',
         description: 'Exibe vitórias, derrotas e K/D de um membro',
@@ -246,6 +249,7 @@ client.once('ready', async () => {
     await registrarComandos(guild);
     await carregarConvites(guild);
     await atualizarRanking(guild);
+    await atualizarHierarquia(guild);
   }
   await restaurarSorteios(client);
   await restaurarEscalacoes(client);
@@ -263,6 +267,7 @@ client.on('inviteDelete', handleInviteDelete);
 client.on('guildMemberAdd',          (member)         => logEntrada(member));
 client.on('guildMemberRemove',       (member)         => registrarSaida(member));
 client.on('guildAuditLogEntryCreate',(entry, guild)   => handleAuditEntry(entry, guild));
+client.on('guildMemberUpdate',       (oldMember, newMember) => handleMemberUpdate(oldMember, newMember));
 
 client.on('interactionCreate', async (interaction) => {
   try {
@@ -312,6 +317,8 @@ client.on('interactionCreate', async (interaction) => {
         await handleAvisar(interaction);
       } else if (interaction.commandName === 'stats') {
         await handleStats(interaction);
+      } else if (interaction.commandName === 'hierarquia-setup') {
+        await handleHierarquiaSetup(interaction);
       } else if (interaction.commandName === 'mensagem') {
         await interaction.deferReply({ ephemeral: true });
         const canal  = interaction.options.getChannel('canal');
