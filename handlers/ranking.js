@@ -149,10 +149,7 @@ async function construirContainer(guild) {
       .join('\n');
   }
 
-  const kdServidor = calcKD(totalVitorias, totalDerrotas);
-  const streakLine = streak >= 2
-    ? `🔥 **Streak atual:** ${streak} vitórias seguidas\n\n`
-    : '';
+  const streakText = streak >= 2 ? `${streak} vitórias seguidas 🔥` : 'Nenhuma';
 
   return new ContainerBuilder()
     .setAccentColor(0xFF0000)
@@ -167,8 +164,10 @@ async function construirContainer(guild) {
         '## 🏆  TOP 10 — Mais Vitórias em Ações\n\n' +
         '> Ranking atualizado automaticamente após cada ação.\n\n' +
         descricao + '\n\n' +
-        streakLine +
-        `⚔️ **Total de ações vencidas:** ${totalVitorias}  ·  💀 **Total de ações perdidas:** ${totalDerrotas}  ·  👥 **Membros no ranking:** ${Math.min(vitorias.size, 10)}\n\n` +
+        `⚔️ **Total de ações vencidas:** ${totalVitorias}\n` +
+        `💀 **Total de ações perdidas:** ${totalDerrotas}\n` +
+        `🔥 **Win Streak:** ${streakText}\n` +
+        `👥 **Membros no ranking:** ${Math.min(vitorias.size, 10)}\n\n` +
         `-# CRX  ·  Atualizado automaticamente`,
       ),
     );
