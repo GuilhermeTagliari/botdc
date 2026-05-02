@@ -24,7 +24,7 @@ const {
   handleLock, handleUnlock, handleSlowmode,
   handleCargo, handleAvisar,
 } = require('./handlers/moderacao');
-const { handleRankingSetup, handleStats } = require('./handlers/ranking');
+const { handleRankingSetup, atualizarRanking, handleStats } = require('./handlers/ranking');
 const { handleSorteioCmd, handleSorteioBtn, restaurarSorteios } = require('./handlers/sorteio');
 const { handlePollCmd, handlePollVoto } = require('./handlers/poll');
 const { handleRegrasSetupCmd, handleRegrasModal } = require('./handlers/regras');
@@ -243,6 +243,7 @@ client.once('ready', async () => {
   for (const guild of client.guilds.cache.values()) {
     await registrarComandos(guild);
     await carregarConvites(guild);
+    await atualizarRanking(guild);
   }
   await restaurarSorteios(client);
   await restaurarEscalacoes(client);

@@ -168,7 +168,7 @@ async function construirContainer(guild) {
         '> Ranking atualizado automaticamente após cada ação.\n\n' +
         descricao + '\n\n' +
         streakLine +
-        `⚔️ **Servidor:** ${totalVitorias}V / ${totalDerrotas}D **·** KD: **${kdServidor}**  ·  👥 **${Math.min(vitorias.size, 10)} membros no top**\n\n` +
+        `⚔️ **Total de ações vencidas:** ${totalVitorias}  ·  💀 **Total de ações perdidas:** ${totalDerrotas}  ·  👥 **Membros no ranking:** ${Math.min(vitorias.size, 10)}\n\n` +
         `-# CRX  ·  Atualizado automaticamente`,
       ),
     );
