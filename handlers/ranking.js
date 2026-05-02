@@ -26,13 +26,15 @@ function lerStats() {
   try { return JSON.parse(fs.readFileSync(ARQUIVO_STATS, 'utf8')); } catch { return null; }
 }
 
-function salvarStats({ vitorias, derrotas, totalVitorias, totalDerrotas, streak }) {
+function salvarStats({ vitorias, derrotas, maxStreak, totalVitorias, totalDerrotas, streak }) {
   const membros = {};
-  for (const [id, v] of vitorias.entries()) {
-    membros[id] = { vitorias: v, derrotas: derrotas.get(id) ?? 0 };
-  }
-  for (const [id, d] of derrotas.entries()) {
-    if (!membros[id]) membros[id] = { vitorias: 0, derrotas: d };
+  const todosIds = new Set([...vitorias.keys(), ...derrotas.keys(), ...maxStreak.keys()]);
+  for (const id of todosIds) {
+    membros[id] = {
+      vitorias:  vitorias.get(id)  ?? 0,
+      derrotas:  derrotas.get(id)  ?? 0,
+      maxStreak: maxStreak.get(id) ?? 0,
+    };
   }
   fs.writeFileSync(ARQUIVO_STATS, JSON.stringify({
     membros,
@@ -67,9 +69,10 @@ async function coletarStats(guild) {
   const derrotas = new Map();
   let totalVitorias = 0;
   let totalDerrotas = 0;
-  let streak        = 0;
-  let streakAtiva   = true;
-  let lastId        = null;
+
+  // Coleta todas as ações em ordem (mais novo primeiro)
+  const acoes = [];
+  let lastId  = null;
 
   while (true) {
     const opcoes = { limit: 100 };
@@ -83,10 +86,12 @@ async function coletarStats(guild) {
       if (msg.embeds[0]?.title?.includes('Vitória')) {
         const listaField = msg.embeds[0].fields?.find((f) => f.name.includes('Lista'));
         if (!listaField) continue;
-        for (const m of listaField.value.matchAll(/<@(\d+)>/g)) {
-          vitorias.set(m[1], (vitorias.get(m[1]) ?? 0) + 1);
+        const participantes = [...listaField.value.matchAll(/<@(\d+)>/g)].map((m) => m[1]);
+        for (const id of participantes) vitorias.set(id, (vitorias.get(id) ?? 0) + 1);
+        if (participantes.length > 0) {
+          totalVitorias++;
+          acoes.push({ tipo: 'vitoria', participantes });
         }
-        totalVitorias++;
         continue;
       }
 
@@ -98,38 +103,55 @@ async function coletarStats(guild) {
       const ehDerrota = text.includes('Derrota');
       if (!ehVitoria && !ehDerrota) continue;
 
-      // Streak: mensagens chegam do mais novo ao mais antigo
-      if (streakAtiva) {
-        if (ehVitoria) streak++;
-        else streakAtiva = false;
-      }
-
       const listaSection = text.match(/Lista de Participantes:\*\*\n([\s\S]+?)\n\n📝/);
       if (!listaSection) continue;
 
-      let tem = false;
-      for (const m of listaSection[1].matchAll(/<@(\d+)>/g)) {
-        if (ehVitoria) vitorias.set(m[1], (vitorias.get(m[1]) ?? 0) + 1);
-        else           derrotas.set(m[1], (derrotas.get(m[1]) ?? 0) + 1);
-        tem = true;
+      const participantes = [...listaSection[1].matchAll(/<@(\d+)>/g)].map((m) => m[1]);
+      if (participantes.length === 0) continue;
+
+      for (const id of participantes) {
+        if (ehVitoria) vitorias.set(id, (vitorias.get(id) ?? 0) + 1);
+        else           derrotas.set(id, (derrotas.get(id) ?? 0) + 1);
       }
-      if (tem) {
-        if (ehVitoria) totalVitorias++;
-        else           totalDerrotas++;
-      }
+      if (ehVitoria) totalVitorias++;
+      else           totalDerrotas++;
+      acoes.push({ tipo: ehVitoria ? 'vitoria' : 'derrota', participantes });
     }
 
     lastId = msgs.last()?.id;
     if (msgs.size < 100) break;
   }
 
-  const resultado = { vitorias, derrotas, totalVitorias, totalDerrotas, streak };
+  // Streak do servidor: conta vitórias consecutivas do mais recente
+  let streak = 0;
+  for (const acao of acoes) {
+    if (acao.tipo === 'vitoria') streak++;
+    else break;
+  }
+
+  // Maior streak por membro: processa em ordem cronológica (inverso)
+  const maxStreak      = new Map();
+  const streakAtualMbr = new Map();
+
+  for (const acao of [...acoes].reverse()) {
+    for (const id of acao.participantes) {
+      if (acao.tipo === 'vitoria') {
+        const atual = (streakAtualMbr.get(id) ?? 0) + 1;
+        streakAtualMbr.set(id, atual);
+        if (atual > (maxStreak.get(id) ?? 0)) maxStreak.set(id, atual);
+      } else {
+        streakAtualMbr.set(id, 0);
+      }
+    }
+  }
+
+  const resultado = { vitorias, derrotas, maxStreak, totalVitorias, totalDerrotas, streak };
   salvarStats(resultado);
   return resultado;
 }
 
 async function construirContainer(guild) {
-  const { vitorias, derrotas, totalVitorias, totalDerrotas, streak } = await coletarStats(guild);
+  const { vitorias, totalVitorias, totalDerrotas, streak } = await coletarStats(guild);
 
   const icones = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 
@@ -179,7 +201,6 @@ async function handleStats(interaction) {
   const membro = interaction.options.getUser('usuario') ?? interaction.user;
 
   try {
-    // Lê do arquivo; se não existir ainda, coleta ao vivo
     let membros, totalVitorias, totalDerrotas, streak;
     const salvo = lerStats();
 
@@ -192,15 +213,20 @@ async function handleStats(interaction) {
       totalDerrotas = coletado.totalDerrotas;
       streak        = coletado.streak;
       for (const [id, v] of coletado.vitorias.entries()) {
-        membros[id] = { vitorias: v, derrotas: coletado.derrotas.get(id) ?? 0 };
+        membros[id] = {
+          vitorias:  v,
+          derrotas:  coletado.derrotas.get(id)  ?? 0,
+          maxStreak: coletado.maxStreak.get(id) ?? 0,
+        };
       }
     }
 
-    const dados   = membros[membro.id] ?? { vitorias: 0, derrotas: 0 };
-    const v       = dados.vitorias;
-    const d       = dados.derrotas;
-    const kd      = calcKD(v, d);
-    const total   = v + d;
+    const dados     = membros[membro.id] ?? { vitorias: 0, derrotas: 0, maxStreak: 0 };
+    const v         = dados.vitorias;
+    const d         = dados.derrotas;
+    const kd        = calcKD(v, d);
+    const total     = v + d;
+    const melhorStr = dados.maxStreak ?? 0;
 
     const rankLista = Object.entries(membros).sort((a, b) => b[1].vitorias - a[1].vitorias);
     const rankIdx   = rankLista.findIndex(([id]) => id === membro.id);
@@ -211,6 +237,7 @@ async function handleStats(interaction) {
       `🏆 **Vitórias:** ${v}\n` +
       `💀 **Derrotas:** ${d}\n` +
       `⚔️ **K/D:** ${kd}\n` +
+      `🔥 **Maior Win Streak:** ${melhorStr}\n` +
       `📋 **Ações participadas:** ${total}\n` +
       `🏅 **Posição no ranking:** ${posicao}\n\n` +
       `-# Dados salvos em: ${salvo ? new Date(salvo.atualizadoEm).toLocaleString('pt-BR') : 'agora'}`;
