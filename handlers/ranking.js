@@ -26,14 +26,15 @@ function lerStats() {
   try { return JSON.parse(fs.readFileSync(ARQUIVO_STATS, 'utf8')); } catch { return null; }
 }
 
-function salvarStats({ vitorias, derrotas, maxStreak, totalVitorias, totalDerrotas, streak }) {
+function salvarStats({ vitorias, derrotas, maxStreak, streakAtual, totalVitorias, totalDerrotas, streak }) {
   const membros = {};
   const todosIds = new Set([...vitorias.keys(), ...derrotas.keys(), ...maxStreak.keys()]);
   for (const id of todosIds) {
     membros[id] = {
-      vitorias:  vitorias.get(id)  ?? 0,
-      derrotas:  derrotas.get(id)  ?? 0,
-      maxStreak: maxStreak.get(id) ?? 0,
+      vitorias:    vitorias.get(id)    ?? 0,
+      derrotas:    derrotas.get(id)    ?? 0,
+      maxStreak:   maxStreak.get(id)   ?? 0,
+      streakAtual: streakAtual.get(id) ?? 0,
     };
   }
   fs.writeFileSync(ARQUIVO_STATS, JSON.stringify({
@@ -129,23 +130,37 @@ async function coletarStats(guild) {
     else break;
   }
 
-  // Maior streak por membro: processa em ordem cronológica (inverso)
-  const maxStreak      = new Map();
-  const streakAtualMbr = new Map();
-
-  for (const acao of [...acoes].reverse()) {
+  // Streak atual por membro: mais novo primeiro, para na primeira derrota
+  const streakAtual  = new Map();
+  const streakParado = new Set();
+  for (const acao of acoes) {
     for (const id of acao.participantes) {
+      if (streakParado.has(id)) continue;
       if (acao.tipo === 'vitoria') {
-        const atual = (streakAtualMbr.get(id) ?? 0) + 1;
-        streakAtualMbr.set(id, atual);
-        if (atual > (maxStreak.get(id) ?? 0)) maxStreak.set(id, atual);
+        streakAtual.set(id, (streakAtual.get(id) ?? 0) + 1);
       } else {
-        streakAtualMbr.set(id, 0);
+        streakParado.add(id);
+        streakAtual.set(id, 0);
       }
     }
   }
 
-  const resultado = { vitorias, derrotas, maxStreak, totalVitorias, totalDerrotas, streak };
+  // Maior streak por membro: processa em ordem cronológica (inverso)
+  const maxStreak      = new Map();
+  const streakContagem = new Map();
+  for (const acao of [...acoes].reverse()) {
+    for (const id of acao.participantes) {
+      if (acao.tipo === 'vitoria') {
+        const atual = (streakContagem.get(id) ?? 0) + 1;
+        streakContagem.set(id, atual);
+        if (atual > (maxStreak.get(id) ?? 0)) maxStreak.set(id, atual);
+      } else {
+        streakContagem.set(id, 0);
+      }
+    }
+  }
+
+  const resultado = { vitorias, derrotas, maxStreak, streakAtual, totalVitorias, totalDerrotas, streak };
   salvarStats(resultado);
   return resultado;
 }
@@ -214,19 +229,21 @@ async function handleStats(interaction) {
       streak        = coletado.streak;
       for (const [id, v] of coletado.vitorias.entries()) {
         membros[id] = {
-          vitorias:  v,
-          derrotas:  coletado.derrotas.get(id)  ?? 0,
-          maxStreak: coletado.maxStreak.get(id) ?? 0,
+          vitorias:    v,
+          derrotas:    coletado.derrotas.get(id)    ?? 0,
+          maxStreak:   coletado.maxStreak.get(id)   ?? 0,
+          streakAtual: coletado.streakAtual.get(id) ?? 0,
         };
       }
     }
 
-    const dados     = membros[membro.id] ?? { vitorias: 0, derrotas: 0, maxStreak: 0 };
-    const v         = dados.vitorias;
-    const d         = dados.derrotas;
-    const kd        = calcKD(v, d);
-    const total     = v + d;
-    const melhorStr = dados.maxStreak ?? 0;
+    const dados      = membros[membro.id] ?? { vitorias: 0, derrotas: 0, maxStreak: 0, streakAtual: 0 };
+    const v          = dados.vitorias;
+    const d          = dados.derrotas;
+    const kd         = calcKD(v, d);
+    const total      = v + d;
+    const melhorStr  = dados.maxStreak   ?? 0;
+    const strAtual   = dados.streakAtual ?? 0;
 
     const rankLista = Object.entries(membros).sort((a, b) => b[1].vitorias - a[1].vitorias);
     const rankIdx   = rankLista.findIndex(([id]) => id === membro.id);
@@ -237,9 +254,10 @@ async function handleStats(interaction) {
       `🏆 **Vitórias:** ${v}\n` +
       `💀 **Derrotas:** ${d}\n` +
       `⚔️ **K/D:** ${kd}\n` +
-      `🔥 **Maior Win Streak:** ${melhorStr}\n` +
+      `🔥 **Win Streak atual:** ${strAtual}\n` +
+      `🏅 **Maior Win Streak:** ${melhorStr}\n` +
       `📋 **Ações participadas:** ${total}\n` +
-      `🏅 **Posição no ranking:** ${posicao}\n\n` +
+      `🎖️ **Posição no ranking:** ${posicao}\n\n` +
       `-# Dados salvos em: ${salvo ? new Date(salvo.atualizadoEm).toLocaleString('pt-BR') : 'agora'}`;
 
     const container = new ContainerBuilder()
