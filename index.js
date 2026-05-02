@@ -421,6 +421,7 @@ client.on('interactionCreate', async (interaction) => {
             '`/slowmode <segundos>` — Define o modo lento (0 = desativar)\n\n' +
             '**🔍 Informações**\n' +
             '`/userinfo [usuário]` — Exibe informações de um membro\n' +
+            '`/stats [usuário]` — Vitórias, derrotas e K/D de um membro\n' +
             '`/comandos` — Exibe esta lista de comandos\n\n' +
             '-# CRX  ·  Feito por zeca',
           ));
