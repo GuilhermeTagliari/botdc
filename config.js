@@ -29,13 +29,14 @@ module.exports = {
   CARGOS_ESCALACAO:  parseIds(process.env.CARGOS_ESCALACAO),
 
   // Hierarquia — um cargo por tier (IDs do Discord)
-  CARGO_HIER_1: process.env.CARGO_HIER_1,
-  CARGO_HIER_2: process.env.CARGO_HIER_2,
-  CARGO_HIER_3: process.env.CARGO_HIER_3,
-  CARGO_HIER_4: process.env.CARGO_HIER_4,
-  CARGO_HIER_5: process.env.CARGO_HIER_5,
-  CARGO_HIER_6: process.env.CARGO_HIER_6,
-  CARGO_HIER_7: process.env.CARGO_HIER_7,
-  CARGO_HIER_8: process.env.CARGO_HIER_8,
-  CARGO_HIER_9: process.env.CARGO_HIER_9,
+  CARGO_HIER_1:  process.env.CARGO_HIER_1,
+  CARGO_HIER_2:  process.env.CARGO_HIER_2,
+  CARGO_HIER_3:  process.env.CARGO_HIER_3,
+  CARGO_HIER_4:  process.env.CARGO_HIER_4,
+  CARGO_HIER_5:  process.env.CARGO_HIER_5,
+  CARGO_HIER_6:  process.env.CARGO_HIER_6,
+  CARGO_HIER_7:  process.env.CARGO_HIER_7,
+  CARGO_HIER_8:  process.env.CARGO_HIER_8,
+  CARGO_HIER_9:  process.env.CARGO_HIER_9,
+  CARGO_HIER_10: process.env.CARGO_HIER_10,
 };

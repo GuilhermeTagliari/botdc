@@ -14,15 +14,16 @@ const ARQUIVO = path.join(__dirname, '../data/hierarquia.json');
 const IMG = 'https://cdn.discordapp.com/attachments/1497039765118255282/1497069523269058651/Logo_CRX_com_brilho_metalico_e_vermelho.jpg?ex=69ee2864&is=69ecd6e4&hm=27a99f4e3c95b941f73a2c4b924fd805b34d59519b976a2451c4d875f5b6c5fc&';
 
 const TIERS = [
-  { emoji: '👑', nome: 'I — Líderes',              cargoKey: 'CARGO_HIER_1' },
-  { emoji: '🔱', nome: 'II — Gerente Geral',        cargoKey: 'CARGO_HIER_2' },
-  { emoji: '⚡', nome: 'III — Gerente Ação',         cargoKey: 'CARGO_HIER_3' },
-  { emoji: '💰', nome: 'IV — Gerente Venda',         cargoKey: 'CARGO_HIER_4' },
-  { emoji: '🌾', nome: 'V — Gerente Farm',           cargoKey: 'CARGO_HIER_5' },
-  { emoji: '📋', nome: 'VI — Gerência Recrutamento', cargoKey: 'CARGO_HIER_6' },
-  { emoji: '🪖', nome: 'VII — Soldado',              cargoKey: 'CARGO_HIER_7' },
-  { emoji: '🔰', nome: 'VIII — Soldado Teste',       cargoKey: 'CARGO_HIER_8' },
-  { emoji: '👤', nome: 'IX — Membro',                cargoKey: 'CARGO_HIER_9' },
+  { emoji: '👑', nome: 'I — Líderes',               cargoKey: 'CARGO_HIER_1'  },
+  { emoji: '🗡️', nome: 'II — Braço Direito',         cargoKey: 'CARGO_HIER_2'  },
+  { emoji: '🔱', nome: 'III — Gerente Geral',        cargoKey: 'CARGO_HIER_3'  },
+  { emoji: '⚡', nome: 'IV — Gerente Ação',           cargoKey: 'CARGO_HIER_4'  },
+  { emoji: '💰', nome: 'V — Gerente Venda',           cargoKey: 'CARGO_HIER_5'  },
+  { emoji: '🌾', nome: 'VI — Gerente Farm',           cargoKey: 'CARGO_HIER_6'  },
+  { emoji: '📋', nome: 'VII — Gerência Recrutamento', cargoKey: 'CARGO_HIER_7'  },
+  { emoji: '🪖', nome: 'VIII — Soldado',              cargoKey: 'CARGO_HIER_8'  },
+  { emoji: '🔰', nome: 'IX — Soldado Teste',          cargoKey: 'CARGO_HIER_9'  },
+  { emoji: '👤', nome: 'X — Membro',                  cargoKey: 'CARGO_HIER_10' },
 ];
 
 function lerDados() {
