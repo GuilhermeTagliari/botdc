@@ -8,6 +8,8 @@ const { handleSelecaoRecrutador } = require('./handlers/selecao');
 const {
   handleEscalacaoChannel,
   handleCriarEscalacao,
+  handleEscalacaoSelectAcao,
+  handleEscalacaoCustom,
   handleModalEscalacao,
   handleParticipar,
   handleSair,
@@ -445,6 +447,12 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isStringSelectMenu()) {
       if (interaction.customId === 'ticket_tipo_select') {
         await handleTicketSelect(interaction);
+      } else if (
+        interaction.customId === 'esc_select_grande' ||
+        interaction.customId === 'esc_select_media'  ||
+        interaction.customId === 'esc_select_pequena'
+      ) {
+        await handleEscalacaoSelectAcao(interaction);
       }
       return;
     }
@@ -474,6 +482,8 @@ client.on('interactionCreate', async (interaction) => {
         await handlePollVoto(interaction, pollId, opcaoIdx);
       } else if (customId === 'escalar_criar') {
         await handleCriarEscalacao(interaction);
+      } else if (customId === 'esc_custom') {
+        await handleEscalacaoCustom(interaction);
       } else if (customId === 'abrir_ficha') {
         await handleBotao(interaction);
       } else if (customId.startsWith('aprovar_') || customId.startsWith('reprovar_')) {

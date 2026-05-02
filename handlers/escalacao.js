@@ -5,6 +5,7 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  StringSelectMenuBuilder,
   UserSelectMenuBuilder,
   ContainerBuilder,
   TextDisplayBuilder,
@@ -13,6 +14,44 @@ const {
   MediaGalleryItemBuilder,
   MessageFlags,
 } = require('discord.js');
+
+const ACOES = {
+  grande: [
+    { nome: 'Niobio',        qty: 15 },
+    { nome: 'Banco Central', qty: 11 },
+    { nome: 'Porto',         qty: 10 },
+    { nome: 'Galinheiro',    qty: 10 },
+    { nome: 'Banco Paleto',  qty: 8  },
+    { nome: 'Hotel Rosa',    qty: 8  },
+  ],
+  media: [
+    { nome: 'Flecca',                 qty: 8 },
+    { nome: 'Joia',                   qty: 8 },
+    { nome: 'Açougue',                qty: 8 },
+    { nome: 'Teatro',                 qty: 8 },
+    { nome: 'Estacionamento (Marrom)',qty: 8 },
+    { nome: 'Bob Cat',                qty: 8 },
+    { nome: 'Automar',                qty: 8 },
+    { nome: 'Aeroporto Trevor',       qty: 6 },
+  ],
+  pequena: [
+    { nome: 'OBS',             qty: 10 },
+    { nome: 'Mergulhador',     qty: 8  },
+    { nome: 'Auditorio',       qty: 6  },
+    { nome: 'Campo de Golf',   qty: 5  },
+    { nome: 'Commedy',         qty: 5  },
+    { nome: 'Estabulo',        qty: 5  },
+    { nome: 'Plannet',         qty: 5  },
+    { nome: 'Navio Cargueiro', qty: 4  },
+    { nome: 'Yellow',          qty: 4  },
+    { nome: 'Lojinha',         qty: 4  },
+    { nome: 'Ammu',            qty: 3  },
+    { nome: 'Bebidas',         qty: 3  },
+    { nome: 'Fast Food',       qty: 3  },
+    { nome: 'Hyper Mercado',   qty: 3  },
+    { nome: 'Mc Donald',       qty: 3  },
+  ],
+};
 const fs   = require('fs');
 const path = require('path');
 const config = require('../config');
@@ -175,22 +214,71 @@ async function handleEscalacaoChannel(client, guild) {
   }
 }
 
+function makeSelectMenu(customId, placeholder, acoes) {
+  return new ActionRowBuilder().addComponents(
+    new StringSelectMenuBuilder()
+      .setCustomId(customId)
+      .setPlaceholder(placeholder)
+      .addOptions(acoes.map((a) => ({
+        label: `${a.nome} — ${a.qty} pessoas`,
+        value: `${a.nome}|${a.qty}`,
+      }))),
+  );
+}
+
 async function handleCriarEscalacao(interaction) {
+  await interaction.reply({
+    content: '⚔️ **Selecione o tipo de ação:**',
+    components: [
+      makeSelectMenu('esc_select_grande',  '🔴 Ação Grande',  ACOES.grande),
+      makeSelectMenu('esc_select_media',   '🟡 Ação Média',   ACOES.media),
+      makeSelectMenu('esc_select_pequena', '🟢 Ação Pequena', ACOES.pequena),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('esc_custom').setLabel('✏️ Ação Personalizada').setStyle(ButtonStyle.Secondary),
+      ),
+    ],
+    ephemeral: true,
+  });
+}
+
+function buildModal(nomePreenchido, qtyPreenchido) {
   const modal = new ModalBuilder().setCustomId('modal_escalacao').setTitle('Criar Escalação');
 
+  const acaoInput = new TextInputBuilder()
+    .setCustomId('esc_acao')
+    .setLabel('Ação')
+    .setStyle(TextInputStyle.Short)
+    .setMaxLength(60)
+    .setRequired(true);
+  if (nomePreenchido) acaoInput.setValue(nomePreenchido);
+
+  const qtdInput = new TextInputBuilder()
+    .setCustomId('esc_quantidade')
+    .setLabel('Quantidade de pessoas (somente números)')
+    .setPlaceholder('Ex: 5')
+    .setStyle(TextInputStyle.Short)
+    .setMaxLength(3)
+    .setRequired(true);
+  if (qtyPreenchido) qtdInput.setValue(String(qtyPreenchido));
+
   modal.addComponents(
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId('esc_acao').setLabel('Ação').setPlaceholder('Ex: Roubo de banco, Sequestro...').setStyle(TextInputStyle.Short).setMaxLength(60).setRequired(true),
-    ),
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId('esc_quantidade').setLabel('Quantidade de pessoas (somente números)').setPlaceholder('Ex: 5').setStyle(TextInputStyle.Short).setMaxLength(3).setRequired(true),
-    ),
+    new ActionRowBuilder().addComponents(acaoInput),
+    new ActionRowBuilder().addComponents(qtdInput),
     new ActionRowBuilder().addComponents(
       new TextInputBuilder().setCustomId('esc_horario').setLabel('Horário').setPlaceholder('Ex: 20:00 ou 20h').setStyle(TextInputStyle.Short).setMaxLength(20).setRequired(true),
     ),
   );
 
-  await interaction.showModal(modal);
+  return modal;
+}
+
+async function handleEscalacaoSelectAcao(interaction) {
+  const [nome, qty] = interaction.values[0].split('|');
+  await interaction.showModal(buildModal(nome, qty));
+}
+
+async function handleEscalacaoCustom(interaction) {
+  await interaction.showModal(buildModal(null, null));
 }
 
 async function handleModalEscalacao(interaction) {
@@ -369,6 +457,8 @@ async function restaurarEscalacoes(client) {
 module.exports = {
   handleEscalacaoChannel,
   handleCriarEscalacao,
+  handleEscalacaoSelectAcao,
+  handleEscalacaoCustom,
   handleModalEscalacao,
   handleParticipar,
   handleSair,
