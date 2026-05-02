@@ -212,7 +212,8 @@ async function handleModalEscalacao(interaction) {
 
   try {
     const canal = await interaction.guild.channels.fetch(config.CANAL_ESCALACAO);
-    const msg   = await canal.send({ content: '@everyone', components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2 });
+    await canal.send({ content: '@everyone' });
+    const msg   = await canal.send({ components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2 });
     esc.messageId  = msg.id;
     esc.channelId  = canal.id;
     escalacoes.set(escId, esc);

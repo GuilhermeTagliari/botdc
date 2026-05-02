@@ -24,7 +24,7 @@ const {
   handleLock, handleUnlock, handleSlowmode,
   handleCargo, handleAvisar,
 } = require('./handlers/moderacao');
-const { handleRankingSetup, handleStats } = require('./handlers/ranking');
+const { handleRankingSetup } = require('./handlers/ranking');
 const { handleSorteioCmd, handleSorteioBtn, restaurarSorteios } = require('./handlers/sorteio');
 const { handlePollCmd, handlePollVoto } = require('./handlers/poll');
 const { handleRegrasSetupCmd, handleRegrasModal } = require('./handlers/regras');
@@ -164,13 +164,6 @@ async function registrarComandos(guild) {
       },
       { name: 'comandos',       description: 'Lista todos os comandos disponíveis do bot' },
       { name: 'ranking-setup', description: 'Envia a mensagem de ranking no canal configurado', defaultMemberPermissions: '8' },
-      {
-        name: 'stats',
-        description: 'Exibe vitórias, derrotas e K/D de um membro',
-        options: [
-          { name: 'usuario', description: 'Membro para consultar (padrão: você mesmo)', type: 6, required: false },
-        ],
-      },
       { name: 'regras-setup',  description: 'Envia ou atualiza o painel de regras (apenas admins)', defaultMemberPermissions: '8',
         options: [{ name: 'canal', description: 'Canal das regras', type: 7, required: true }] },
       {
@@ -307,8 +300,6 @@ client.on('interactionCreate', async (interaction) => {
         await handleCargo(interaction);
       } else if (interaction.commandName === 'avisar') {
         await handleAvisar(interaction);
-      } else if (interaction.commandName === 'stats') {
-        await handleStats(interaction);
       } else if (interaction.commandName === 'mensagem') {
         await interaction.deferReply({ ephemeral: true });
         const canal  = interaction.options.getChannel('canal');
