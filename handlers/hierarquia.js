@@ -38,6 +38,8 @@ function salvarDados(dados) {
 }
 
 async function construirPainel(guild) {
+  console.log('[DEBUG env] CARGO_HIER_1 =', JSON.stringify(process.env.CARGO_HIER_1));
+  console.log('[DEBUG cfg] CARGO_HIER_1 =', JSON.stringify(config.CARGO_HIER_1));
   const agora = Date.now();
   const ultimoFetch = ultimoFetchPorGuild.get(guild.id) ?? 0;
   if (agora - ultimoFetch > 30000) {

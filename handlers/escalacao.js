@@ -300,7 +300,8 @@ async function handleEscalacaoSelectAcao(interaction) {
     let msg;
     try {
       msg = await canal.send({ content: '@everyone', components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: ['everyone'] } });
-    } catch {
+    } catch (errEvery) {
+      console.error(`[${new Date().toISOString()}] Falha ao enviar @everyone:`, errEvery.message);
       msg = await canal.send({ components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2 });
     }
 
@@ -342,7 +343,8 @@ async function handleModalEscalacao(interaction) {
     let msg;
     try {
       msg = await canal.send({ content: '@everyone', components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: ['everyone'] } });
-    } catch {
+    } catch (errEvery) {
+      console.error(`[${new Date().toISOString()}] Falha ao enviar @everyone:`, errEvery.message);
       msg = await canal.send({ components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2 });
     }
 
