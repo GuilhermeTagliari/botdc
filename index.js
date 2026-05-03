@@ -9,6 +9,8 @@ const {
   handleEscalacaoChannel,
   handleCriarEscalacao,
   handleEscalacaoSelectAcao,
+  handleEscalacaoConfirm,
+  handleEscalacaoVoltar,
   handleEscalacaoCustom,
   handleModalEscalacao,
   handleParticipar,
@@ -489,6 +491,10 @@ client.on('interactionCreate', async (interaction) => {
         await handlePollVoto(interaction, pollId, opcaoIdx);
       } else if (customId === 'escalar_criar') {
         await handleCriarEscalacao(interaction);
+      } else if (customId.startsWith('esc_confirm_')) {
+        await handleEscalacaoConfirm(interaction, customId.slice('esc_confirm_'.length));
+      } else if (customId === 'esc_voltar') {
+        await handleEscalacaoVoltar(interaction);
       } else if (customId === 'esc_custom') {
         await handleEscalacaoCustom(interaction);
       } else if (customId === 'abrir_ficha') {

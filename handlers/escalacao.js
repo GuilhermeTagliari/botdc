@@ -273,8 +273,37 @@ function buildModal(nomePreenchido, qtyPreenchido) {
 }
 
 async function handleEscalacaoSelectAcao(interaction) {
-  const [nome, qty] = interaction.values[0].split('|');
+  const value       = interaction.values[0];
+  const [nome, qty] = value.split('|');
+
+  await interaction.update({
+    content: `✅ Selecionado: **${nome}** — ${qty} pessoas\n\nClique em **Confirmar** para definir o horário.`,
+    components: [
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId(`esc_confirm_${value}`).setLabel('⏰ Confirmar e definir horário').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('esc_voltar').setLabel('↩️ Voltar').setStyle(ButtonStyle.Secondary),
+      ),
+    ],
+  });
+}
+
+async function handleEscalacaoConfirm(interaction, value) {
+  const [nome, qty] = value.split('|');
   await interaction.showModal(buildModal(nome, qty));
+}
+
+async function handleEscalacaoVoltar(interaction) {
+  await interaction.update({
+    content: '⚔️ **Selecione o tipo de ação:**',
+    components: [
+      makeSelectMenu('esc_select_grande',  '🔴 Ação Grande',  ACOES.grande),
+      makeSelectMenu('esc_select_media',   '🟡 Ação Média',   ACOES.media),
+      makeSelectMenu('esc_select_pequena', '🟢 Ação Pequena', ACOES.pequena),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('esc_custom').setLabel('✏️ Ação Personalizada').setStyle(ButtonStyle.Secondary),
+      ),
+    ],
+  });
 }
 
 async function handleEscalacaoCustom(interaction) {
@@ -458,6 +487,8 @@ module.exports = {
   handleEscalacaoChannel,
   handleCriarEscalacao,
   handleEscalacaoSelectAcao,
+  handleEscalacaoConfirm,
+  handleEscalacaoVoltar,
   handleEscalacaoCustom,
   handleModalEscalacao,
   handleParticipar,
