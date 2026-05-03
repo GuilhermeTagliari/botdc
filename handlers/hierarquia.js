@@ -42,7 +42,9 @@ async function construirPainel(guild) {
   const ultimoFetch = ultimoFetchPorGuild.get(guild.id) ?? 0;
   if (agora - ultimoFetch > 30000) {
     ultimoFetchPorGuild.set(guild.id, agora);
-    await guild.members.fetch();
+    try { await guild.members.fetch(); } catch (err) {
+      console.warn(`[hierarquia] members.fetch rate limited — usando cache: ${err.message}`);
+    }
   }
 
   const totalMembros = guild.members.cache.filter((m) => !m.user.bot).size;

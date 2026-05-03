@@ -254,7 +254,6 @@ client.once('ready', async () => {
     await registrarComandos(guild);
     await carregarConvites(guild);
     await atualizarRanking(guild);
-    await atualizarHierarquia(guild);
   }
   await restaurarSorteios(client);
   await restaurarEscalacoes(client);
