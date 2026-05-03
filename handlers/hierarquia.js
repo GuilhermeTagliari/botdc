@@ -97,14 +97,28 @@ async function handleHierarquiaSetup(interaction) {
   const canal = interaction.options.getChannel('canal');
 
   try {
+    await interaction.guild.members.fetch();
+    const totalMembros = interaction.guild.members.cache.filter((m) => !m.user.bot).size;
+
+    const diagLines = TIERS.map((t) => {
+      const id    = config[t.cargoKey];
+      const count = id ? interaction.guild.members.cache.filter((m) => !m.user.bot && m.roles.cache.has(id)).size : 0;
+      return `${t.emoji} ${t.nome}: **${count}** membros (cargo: \`${id ?? 'não configurado'}\`)`;
+    });
+
     const container = await construirPainel(interaction.guild);
     const msg = await canal.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
 
     salvarDados({ messageId: msg.id, channelId: canal.id });
-    await interaction.editReply({ content: `✅ Painel de hierarquia enviado em ${canal}!` });
+    await interaction.editReply({
+      content:
+        `✅ Painel enviado em ${canal}!\n\n` +
+        `📊 **${totalMembros} membros** encontrados no cache:\n` +
+        diagLines.join('\n'),
+    });
   } catch (err) {
     console.error(`[${new Date().toISOString()}] Erro ao enviar hierarquia:`, err);
-    await interaction.editReply({ content: '❌ Erro ao enviar o painel. Verifique as permissões do bot.' });
+    await interaction.editReply({ content: `❌ Erro ao enviar o painel: \`${err.message}\`` });
   }
 }
 
