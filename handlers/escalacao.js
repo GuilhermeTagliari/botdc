@@ -110,7 +110,7 @@ function botoesResultado(escId) {
 }
 
 function criarContainer(esc, escId) {
-  const { acao, quantidade, horario, slots, fechada, resultado } = esc;
+  const { acao, quantidade, horario, slots, fechada, resultado, criadorId } = esc;
   const preenchidos = slots.filter(Boolean).length;
   const cheia       = preenchidos >= quantidade;
   const lista       = slots.map((id, i) => `\`${i + 1}.\` ${id ? `<@${id}>` : '—'}`).join('\n');
@@ -133,11 +133,13 @@ function criarContainer(esc, escId) {
     statusLine = '💀  Derrota registrada';
   }
 
+  const criadorLine = criadorId ? `  ·  👤 Criado por <@${criadorId}>` : '';
+
   const text =
     `## ⚔️  ${acao}\n\n` +
     `🕐 **Horário:** ${horario}  ·  📊 **Vagas:** **${preenchidos}/${quantidade}**  ·  📈 ${barraProgresso(preenchidos, quantidade)}\n\n` +
     `**👥 Participantes:**\n${lista || '—'}\n\n` +
-    `-# ${statusLine}`;
+    `-# ${statusLine}${criadorLine}`;
 
   const container = new ContainerBuilder()
     .setAccentColor(color)
@@ -325,7 +327,7 @@ async function handleModalEscalacao(interaction) {
 
   const escId = gerarId();
   const slots  = Array(quantidade).fill(null);
-  const esc    = { acao, quantidade, horario, slots, fechada: false, resultado: null, messageId: null, channelId: null, guildId: interaction.guild.id };
+  const esc    = { acao, quantidade, horario, slots, fechada: false, resultado: null, messageId: null, channelId: null, guildId: interaction.guild.id, criadorId: interaction.user.id };
 
   try {
     const canal = await interaction.guild.channels.fetch(config.CANAL_ESCALACAO);
@@ -333,7 +335,7 @@ async function handleModalEscalacao(interaction) {
 
     let msg;
     try {
-      msg = await canal.send({ content: '@everyone', components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2 });
+      msg = await canal.send({ content: '@everyone', components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: ['everyone'] } });
     } catch {
       msg = await canal.send({ components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2 });
     }
@@ -459,12 +461,14 @@ async function handleResultado(interaction, escId, vitoria) {
     ? participantes.map((id, i) => `\`${i + 1}.\` <@${id}>`).join('\n')
     : '`Nenhum`';
 
+  const criadorLine = esc.criadorId ? `\n👤 Criado por <@${esc.criadorId}>` : '';
+
   const text =
     `## ${vitoria ? '🏆  Vitória!' : '💀  Derrota'}\n` +
     `${vitoria ? 'A ação foi concluída com sucesso!' : 'A ação não saiu como planejado.'}\n\n` +
     `⚔️ **Ação:** ${esc.acao}  ·  🕐 **Horário:** ${esc.horario}  ·  👥 **${participantes.length} membros**\n\n` +
     `**📋 Lista de Participantes:**\n${lista}\n\n` +
-    `📝 Registrado por <@${interaction.user.id}>  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
+    `📝 Registrado por <@${interaction.user.id}>${criadorLine}  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
 
   const container = new ContainerBuilder()
     .setAccentColor(vitoria ? 0x57F287 : 0xFF0000)
