@@ -329,14 +329,22 @@ async function handleModalEscalacao(interaction) {
 
   try {
     const canal = await interaction.guild.channels.fetch(config.CANAL_ESCALACAO);
-    const msg   = await canal.send({ content: '@everyone', components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2 });
+    if (!canal) throw new Error('Canal CANAL_ESCALACAO não encontrado no servidor.');
+
+    let msg;
+    try {
+      msg = await canal.send({ content: '@everyone', components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2 });
+    } catch {
+      msg = await canal.send({ components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2 });
+    }
+
     esc.messageId  = msg.id;
     esc.channelId  = canal.id;
     escalacoes.set(escId, esc);
     salvarDados();
   } catch (err) {
     console.error(`[${new Date().toISOString()}] Erro ao publicar escalação:`, err);
-    await interaction.editReply({ content: '❌ Erro ao criar escalação. Verifique o canal configurado.' });
+    await interaction.editReply({ content: `❌ Erro ao criar escalação: \`${err.message}\`` });
     return;
   }
 
