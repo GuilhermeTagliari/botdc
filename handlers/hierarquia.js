@@ -13,6 +13,8 @@ const config = require('../config');
 const ARQUIVO = path.join(__dirname, '../data/hierarquia.json');
 const IMG = 'https://cdn.discordapp.com/attachments/1497039765118255282/1497069523269058651/Logo_CRX_com_brilho_metalico_e_vermelho.jpg?ex=69ee2864&is=69ecd6e4&hm=27a99f4e3c95b941f73a2c4b924fd805b34d59519b976a2451c4d875f5b6c5fc&';
 
+const ultimoFetchPorGuild = new Map();
+
 const TIERS = [
   { emoji: '👑', nome: 'I — Líderes',               cargoKey: 'CARGO_HIER_1'  },
   { emoji: '🗡️', nome: 'II — Braço Direito',         cargoKey: 'CARGO_HIER_2'  },
@@ -36,7 +38,12 @@ function salvarDados(dados) {
 }
 
 async function construirPainel(guild) {
-  await guild.members.fetch();
+  const agora = Date.now();
+  const ultimoFetch = ultimoFetchPorGuild.get(guild.id) ?? 0;
+  if (agora - ultimoFetch > 30000) {
+    await guild.members.fetch();
+    ultimoFetchPorGuild.set(guild.id, agora);
+  }
 
   const totalMembros = guild.members.cache.filter((m) => !m.user.bot).size;
   console.log(`[hierarquia] Membros no cache: ${totalMembros}`);
