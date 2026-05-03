@@ -172,16 +172,11 @@ async function handleEscalacaoChannel(client, guild) {
     if (!channel) return;
 
     const mensagens = await channel.messages.fetch({ limit: 50 });
-    const jaExiste  = mensagens.some(
-      (m) => m.author.id === client.user.id && (
-        (m.embeds.length > 0 && m.components.length > 0 && m.embeds[0]?.title?.includes('Escalação')) ||
-        m.flags.has(MessageFlags.IsComponentsV2)
-      ),
+    const antigaSetup = mensagens.find(
+      (m) => m.author.id === client.user.id && m.flags.has(MessageFlags.IsComponentsV2),
     );
-
-    if (jaExiste) {
-      console.log(`[${new Date().toISOString()}] Mensagem de escalação já existe — nenhuma ação necessária.`);
-      return;
+    if (antigaSetup) {
+      try { await antigaSetup.delete(); } catch {}
     }
 
     const container = new ContainerBuilder()
@@ -195,18 +190,19 @@ async function handleEscalacaoChannel(client, guild) {
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
           '# ESCALAÇÃO — CRX\n\n' +
-          'Clique no botão abaixo para iniciar uma nova escalação de ação.\n\n' +
-          '**1.** Clique em **Criar Escalação**\n' +
-          '**2.** Preencha o nome da ação e o horário\n' +
-          '**3.** Defina a quantidade de participantes\n' +
-          '**4.** Aguarde os membros entrarem nos slots\n\n' +
+          'Selecione a ação no menu abaixo para criar uma escalação.\n\n' +
+          '**1.** Selecione a categoria de ação\n' +
+          '**2.** Aguarde os membros entrarem nos slots\n\n' +
           '-# Somente Soldado ou superior pode criar escalações.',
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+      .addActionRowComponents(makeSelectMenu('esc_select_grande',  '🔴 Ação Grande',  ACOES.grande))
+      .addActionRowComponents(makeSelectMenu('esc_select_media',   '🟡 Ação Média',   ACOES.media))
+      .addActionRowComponents(makeSelectMenu('esc_select_pequena', '🟢 Ação Pequena', ACOES.pequena))
       .addActionRowComponents(
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('escalar_criar').setLabel('⚔️ Criar Escalação').setStyle(ButtonStyle.Danger),
+          new ButtonBuilder().setCustomId('esc_custom').setLabel('✏️ Ação Personalizada').setStyle(ButtonStyle.Secondary),
         ),
       );
 
