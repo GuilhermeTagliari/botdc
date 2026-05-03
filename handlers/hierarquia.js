@@ -41,8 +41,8 @@ async function construirPainel(guild) {
   const agora = Date.now();
   const ultimoFetch = ultimoFetchPorGuild.get(guild.id) ?? 0;
   if (agora - ultimoFetch > 30000) {
-    await guild.members.fetch();
     ultimoFetchPorGuild.set(guild.id, agora);
+    await guild.members.fetch();
   }
 
   const totalMembros = guild.members.cache.filter((m) => !m.user.bot).size;
