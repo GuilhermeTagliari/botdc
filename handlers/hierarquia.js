@@ -31,11 +31,21 @@ function lerDados() {
 }
 
 function salvarDados(dados) {
+  fs.mkdirSync(path.dirname(ARQUIVO), { recursive: true });
   fs.writeFileSync(ARQUIVO, JSON.stringify(dados, null, 2));
 }
 
 async function construirPainel(guild) {
   await guild.members.fetch();
+
+  const totalMembros = guild.members.cache.filter((m) => !m.user.bot).size;
+  console.log(`[hierarquia] Membros no cache: ${totalMembros}`);
+  TIERS.forEach((t) => {
+    const id = config[t.cargoKey];
+    const roleExiste = id ? guild.roles.cache.has(id) : false;
+    const count = id ? guild.members.cache.filter((m) => !m.user.bot && m.roles.cache.has(id)).size : 0;
+    console.log(`[hierarquia] ${t.nome} | cargoId=${id} | roleExiste=${roleExiste} | membros=${count}`);
+  });
 
   const linhas = TIERS.map((tier) => {
     const cargoId = config[tier.cargoKey];
