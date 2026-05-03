@@ -38,8 +38,6 @@ function salvarDados(dados) {
 }
 
 async function construirPainel(guild) {
-  console.log('[DEBUG env] CARGO_HIER_1 =', JSON.stringify(process.env.CARGO_HIER_1));
-  console.log('[DEBUG cfg] CARGO_HIER_1 =', JSON.stringify(config.CARGO_HIER_1));
   const agora = Date.now();
   const ultimoFetch = ultimoFetchPorGuild.get(guild.id) ?? 0;
   if (agora - ultimoFetch > 30000) {
@@ -49,24 +47,27 @@ async function construirPainel(guild) {
     }
   }
 
-  const totalMembros = guild.members.cache.filter((m) => !m.user.bot).size;
-  console.log(`[hierarquia] Membros no cache: ${totalMembros}`);
-  TIERS.forEach((t) => {
-    const id = config[t.cargoKey];
-    const roleExiste = id ? guild.roles.cache.has(id) : false;
-    const count = id ? guild.members.cache.filter((m) => !m.user.bot && m.roles.cache.has(id)).size : 0;
-    console.log(`[hierarquia] ${t.nome} | cargoId=${id} | roleExiste=${roleExiste} | membros=${count}`);
+  // Mapeia cada membro para o seu tier mais alto
+  const tierDoMembro = new Map();
+  TIERS.forEach((tier, i) => {
+    const cargoId = config[tier.cargoKey];
+    if (!cargoId) return;
+    guild.members.cache.forEach((m) => {
+      if (!m.user.bot && m.roles.cache.has(cargoId) && !tierDoMembro.has(m.id)) {
+        tierDoMembro.set(m.id, i);
+      }
+    });
   });
 
-  const linhas = TIERS.map((tier) => {
+  const linhas = TIERS.map((tier, i) => {
     const cargoId = config[tier.cargoKey];
     if (!cargoId) return `${tier.emoji} **${tier.nome}**\n*vazio*`;
 
     const membros = guild.members.cache
-      .filter((m) => !m.user.bot && m.roles.cache.has(cargoId))
+      .filter((m) => !m.user.bot && m.roles.cache.has(cargoId) && tierDoMembro.get(m.id) === i)
       .map((m) => `\`${m.displayName}\``);
 
-    const valor = membros.length > 0 ? membros.join(' ') : '*vazio*';
+    const valor = membros.length > 0 ? membros.join('\n') : '*vazio*';
     return `${tier.emoji} **${tier.nome}**\n${valor}`;
   });
 
