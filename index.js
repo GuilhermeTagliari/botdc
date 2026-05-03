@@ -1,5 +1,9 @@
 require('dotenv').config();
 
+const fs   = require('fs');
+const path = require('path');
+fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
+
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const { handleRecrutamentoChannel, handleBotao } = require('./handlers/botao');
 const { handleModal }             = require('./handlers/modal');
