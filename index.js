@@ -13,8 +13,6 @@ const {
   handleEscalacaoChannel,
   handleCriarEscalacao,
   handleEscalacaoSelectAcao,
-  handleEscalacaoConfirm,
-  handleEscalacaoVoltar,
   handleEscalacaoCustom,
   handleModalEscalacao,
   handleParticipar,
@@ -22,6 +20,7 @@ const {
   handleRemoverBtn,
   handleRemoverSelect,
   handleFechar,
+  handleReabrir,
   handleResultado,
   restaurarEscalacoes,
 } = require('./handlers/escalacao');
@@ -495,10 +494,6 @@ client.on('interactionCreate', async (interaction) => {
         await handlePollVoto(interaction, pollId, opcaoIdx);
       } else if (customId === 'escalar_criar') {
         await handleCriarEscalacao(interaction);
-      } else if (customId.startsWith('esc_confirm_')) {
-        await handleEscalacaoConfirm(interaction, customId.slice('esc_confirm_'.length));
-      } else if (customId === 'esc_voltar') {
-        await handleEscalacaoVoltar(interaction);
       } else if (customId === 'esc_custom') {
         await handleEscalacaoCustom(interaction);
       } else if (customId === 'abrir_ficha') {
@@ -513,6 +508,8 @@ client.on('interactionCreate', async (interaction) => {
         await handleRemoverBtn(interaction, customId.slice('esc_remover_'.length));
       } else if (customId.startsWith('esc_fechar_')) {
         await handleFechar(interaction, customId.slice('esc_fechar_'.length));
+      } else if (customId.startsWith('esc_reabrir_')) {
+        await handleReabrir(interaction, customId.slice('esc_reabrir_'.length));
       } else if (customId.startsWith('esc_vitoria_')) {
         await handleResultado(interaction, customId.slice('esc_vitoria_'.length), true);
       } else if (customId.startsWith('esc_derrota_')) {

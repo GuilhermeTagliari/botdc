@@ -105,6 +105,7 @@ function botoesResultado(escId) {
     new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId(`esc_vitoria_${escId}`).setLabel('🏆 Vitória').setStyle(ButtonStyle.Success),
       new ButtonBuilder().setCustomId(`esc_derrota_${escId}`).setLabel('💀 Derrota').setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId(`esc_reabrir_${escId}`).setLabel('🔓 Reabrir Ação').setStyle(ButtonStyle.Secondary),
     ),
   ];
 }
@@ -137,7 +138,7 @@ function criarContainer(esc, escId) {
 
   const text =
     `## ⚔️  ${acao}\n\n` +
-    `🕐 **Horário:** ${horario}  ·  📊 **Vagas:** **${preenchidos}/${quantidade}**  ·  📈 ${barraProgresso(preenchidos, quantidade)}\n\n` +
+    `📊 **Vagas:** **${preenchidos}/${quantidade}**  ·  📈 ${barraProgresso(preenchidos, quantidade)}\n\n` +
     `**👥 Participantes:**\n${lista || '—'}\n\n` +
     `-# ${statusLine}${criadorLine}`;
 
@@ -229,26 +230,40 @@ function makeSelectMenu(customId, placeholder, acoes) {
 }
 
 async function handleCriarEscalacao(interaction) {
-  await interaction.reply({
-    content: '⚔️ **Selecione o tipo de ação:**',
-    components: [
-      makeSelectMenu('esc_select_grande',  '🔴 Ação Grande',  ACOES.grande),
-      makeSelectMenu('esc_select_media',   '🟡 Ação Média',   ACOES.media),
-      makeSelectMenu('esc_select_pequena', '🟢 Ação Pequena', ACOES.pequena),
+  const container = new ContainerBuilder()
+    .setAccentColor(0xFF0000)
+    .addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(IMG)),
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        '# ⚔️  CRIAR ESCALAÇÃO\n\n' +
+        'Selecione a ação no menu abaixo para criar a escalação automaticamente.\n\n' +
+        '1. Selecione a categoria de ação\n' +
+        '2. Aguarde os membros entrarem nos slots\n\n' +
+        '-# Somente Soldado ou superior pode criar escalações.',
+      ),
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+    .addActionRowComponents(makeSelectMenu('esc_select_grande',  '🔴 Ação Grande',  ACOES.grande))
+    .addActionRowComponents(makeSelectMenu('esc_select_media',   '🟡 Ação Média',   ACOES.media))
+    .addActionRowComponents(makeSelectMenu('esc_select_pequena', '🟢 Ação Pequena', ACOES.pequena))
+    .addActionRowComponents(
       new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('esc_custom').setLabel('✏️ Ação Personalizada').setStyle(ButtonStyle.Secondary),
       ),
-    ],
-    ephemeral: true,
-  });
+    );
+
+  await interaction.reply({ components: [container], flags: MessageFlags.IsComponentsV2, ephemeral: true });
 }
 
 function buildModal(nomePreenchido, qtyPreenchido) {
-  const modal = new ModalBuilder().setCustomId('modal_escalacao').setTitle('Criar Escalação');
+  const modal = new ModalBuilder().setCustomId('modal_escalacao').setTitle('Criar Escalação Personalizada');
 
   const acaoInput = new TextInputBuilder()
     .setCustomId('esc_acao')
-    .setLabel('Ação')
+    .setLabel('Nome da Ação')
     .setStyle(TextInputStyle.Short)
     .setMaxLength(60)
     .setRequired(true);
@@ -266,9 +281,6 @@ function buildModal(nomePreenchido, qtyPreenchido) {
   modal.addComponents(
     new ActionRowBuilder().addComponents(acaoInput),
     new ActionRowBuilder().addComponents(qtdInput),
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder().setCustomId('esc_horario').setLabel('Horário').setPlaceholder('Ex: 20:00 ou 20h').setStyle(TextInputStyle.Short).setMaxLength(20).setRequired(true),
-    ),
   );
 
   return modal;
@@ -277,35 +289,34 @@ function buildModal(nomePreenchido, qtyPreenchido) {
 async function handleEscalacaoSelectAcao(interaction) {
   const value       = interaction.values[0];
   const [nome, qty] = value.split('|');
+  const quantidade  = parseInt(qty, 10);
 
-  await interaction.update({
-    content: `✅ Selecionado: **${nome}** — ${qty} pessoas\n\nClique em **Confirmar** para definir o horário.`,
-    components: [
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`esc_confirm_${value}`).setLabel('⏰ Confirmar e definir horário').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('esc_voltar').setLabel('↩️ Voltar').setStyle(ButtonStyle.Secondary),
-      ),
-    ],
-  });
-}
+  await interaction.deferUpdate();
 
-async function handleEscalacaoConfirm(interaction, value) {
-  const [nome, qty] = value.split('|');
-  await interaction.showModal(buildModal(nome, qty));
-}
+  const escId = gerarId();
+  const slots = Array(quantidade).fill(null);
+  const esc   = { acao: nome, quantidade, slots, fechada: false, resultado: null, messageId: null, channelId: null, guildId: interaction.guild.id, criadorId: interaction.user.id };
 
-async function handleEscalacaoVoltar(interaction) {
-  await interaction.update({
-    content: '⚔️ **Selecione o tipo de ação:**',
-    components: [
-      makeSelectMenu('esc_select_grande',  '🔴 Ação Grande',  ACOES.grande),
-      makeSelectMenu('esc_select_media',   '🟡 Ação Média',   ACOES.media),
-      makeSelectMenu('esc_select_pequena', '🟢 Ação Pequena', ACOES.pequena),
-      new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('esc_custom').setLabel('✏️ Ação Personalizada').setStyle(ButtonStyle.Secondary),
-      ),
-    ],
-  });
+  try {
+    const canal = await interaction.guild.channels.fetch(config.CANAL_ESCALACAO);
+    if (!canal) throw new Error('Canal CANAL_ESCALACAO não encontrado.');
+
+    let msg;
+    try {
+      msg = await canal.send({ content: '@everyone', components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2, allowedMentions: { parse: ['everyone'] } });
+    } catch {
+      msg = await canal.send({ components: [criarContainer(esc, escId)], flags: MessageFlags.IsComponentsV2 });
+    }
+
+    esc.messageId = msg.id;
+    esc.channelId = canal.id;
+    escalacoes.set(escId, esc);
+    salvarDados();
+    await interaction.followUp({ content: `✅ Escalação **${nome}** criada — ${quantidade} vagas.`, ephemeral: true });
+  } catch (err) {
+    console.error(`[${new Date().toISOString()}] Erro ao publicar escalação:`, err);
+    await interaction.followUp({ content: `❌ Erro ao criar escalação: \`${err.message}\``, ephemeral: true });
+  }
 }
 
 async function handleEscalacaoCustom(interaction) {
@@ -317,7 +328,6 @@ async function handleModalEscalacao(interaction) {
 
   const acao      = interaction.fields.getTextInputValue('esc_acao');
   const qtdRaw    = interaction.fields.getTextInputValue('esc_quantidade');
-  const horario   = interaction.fields.getTextInputValue('esc_horario');
   const quantidade = parseInt(qtdRaw, 10);
 
   if (isNaN(quantidade) || quantidade < 1 || quantidade > 100) {
@@ -327,7 +337,7 @@ async function handleModalEscalacao(interaction) {
 
   const escId = gerarId();
   const slots  = Array(quantidade).fill(null);
-  const esc    = { acao, quantidade, horario, slots, fechada: false, resultado: null, messageId: null, channelId: null, guildId: interaction.guild.id, criadorId: interaction.user.id };
+  const esc    = { acao, quantidade, slots, fechada: false, resultado: null, messageId: null, channelId: null, guildId: interaction.guild.id, criadorId: interaction.user.id };
 
   try {
     const canal = await interaction.guild.channels.fetch(config.CANAL_ESCALACAO);
@@ -440,6 +450,25 @@ async function handleFechar(interaction, escId) {
   await interaction.editReply({ content: '🔒 Ação encerrada! Registre o resultado abaixo.' });
 }
 
+async function handleReabrir(interaction, escId) {
+  await interaction.deferReply({ ephemeral: true });
+
+  if (!temPermissao(interaction.member, config.CARGOS_ESCALACAO)) {
+    await interaction.editReply({ content: '❌ Você não tem permissão para reabrir escalações.' });
+    return;
+  }
+
+  const esc = escalacoes.get(escId);
+  if (!esc)          { await interaction.editReply({ content: '❌ Escalação não encontrada ou expirada.' }); return; }
+  if (!esc.fechada)  { await interaction.editReply({ content: '⚠️ Esta escalação já está aberta.' }); return; }
+  if (esc.resultado) { await interaction.editReply({ content: '⚠️ Não é possível reabrir uma escalação com resultado já registrado.' }); return; }
+
+  esc.fechada = false;
+  salvarDados();
+  await atualizarMensagem(interaction.guild, esc, escId);
+  await interaction.editReply({ content: '🔓 Escalação reaberta com sucesso!' });
+}
+
 async function handleResultado(interaction, escId, vitoria) {
   await interaction.deferReply({ ephemeral: true });
 
@@ -466,7 +495,7 @@ async function handleResultado(interaction, escId, vitoria) {
   const text =
     `## ${vitoria ? '🏆  Vitória!' : '💀  Derrota'}\n` +
     `${vitoria ? 'A ação foi concluída com sucesso!' : 'A ação não saiu como planejado.'}\n\n` +
-    `⚔️ **Ação:** ${esc.acao}  ·  🕐 **Horário:** ${esc.horario}  ·  👥 **${participantes.length} membros**\n\n` +
+    `⚔️ **Ação:** ${esc.acao}  ·  👥 **${participantes.length} membros**\n\n` +
     `**📋 Lista de Participantes:**\n${lista}\n\n` +
     `📝 Registrado por <@${interaction.user.id}>${criadorLine}  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
 
@@ -499,8 +528,6 @@ module.exports = {
   handleEscalacaoChannel,
   handleCriarEscalacao,
   handleEscalacaoSelectAcao,
-  handleEscalacaoConfirm,
-  handleEscalacaoVoltar,
   handleEscalacaoCustom,
   handleModalEscalacao,
   handleParticipar,
@@ -508,6 +535,7 @@ module.exports = {
   handleRemoverBtn,
   handleRemoverSelect,
   handleFechar,
+  handleReabrir,
   handleResultado,
   restaurarEscalacoes,
 };
