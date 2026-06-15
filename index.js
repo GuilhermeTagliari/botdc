@@ -710,9 +710,9 @@ client.on('interactionCreate', async (interaction) => {
         await handleAusenciaSetup(client, interaction.guild);
         await interaction.editReply({ content: '✅ Mensagem de ausência enviada!' });
       } else if (interaction.commandName === 'comandos') {
-        await interaction.deferReply();
-        const { ContainerBuilder: CBcmd, TextDisplayBuilder: TDBcmd, SeparatorBuilder: SBcmd, MediaGalleryBuilder: MGBcmd, MediaGalleryItemBuilder: MGIBcmd, ButtonBuilder: BBcmd, ButtonStyle: BScmd, ActionRowBuilder: ARcmd, MessageFlags: MFcmd } = require('discord.js');
-        const imgCmds = 'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863&';
+        await interaction.deferReply({ ephemeral: true });
+        const { ContainerBuilder: CBcmd, TextDisplayBuilder: TDBcmd, SeparatorBuilder: SBcmd, MediaGalleryBuilder: MGBcmd, MediaGalleryItemBuilder: MGIBcmd, MessageFlags: MFcmd } = require('discord.js');
+        const imgCmds = 'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863';
         const containerCmds = new CBcmd()
           .setAccentColor(0x3498DB)
           .addMediaGalleryComponents(new MGBcmd().addItems(new MGIBcmd().setURL(imgCmds)))
@@ -806,13 +806,7 @@ client.on('interactionCreate', async (interaction) => {
             '**🔧 Setup → Enviar Mensagens**\n' +
             'Reenvia o painel do módulo no canal configurado. Use após personalizar, trocar o canal ou reiniciar o bot.\n\n' +
             '-# Never Pure  ·  Feito por zeca',
-          ))
-          .addSeparatorComponents(new SBcmd().setDivider(true))
-          .addActionRowComponents(
-            new ARcmd().addComponents(
-              new BBcmd().setLabel('💬 Falar com o Dev').setStyle(BScmd.Link).setURL('https://discord.com/users/1063952719838195812'),
-            ),
-          );
+          ));
         await interaction.editReply({ components: [containerCmds], flags: MFcmd.IsComponentsV2 });
       } else if (interaction.commandName === 'codiguinho-setup') {
         await interaction.deferReply({ ephemeral: true });
