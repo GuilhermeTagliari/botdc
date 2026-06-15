@@ -148,14 +148,18 @@ function buildSecao(secao) {
       embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
         `## 💰 Vendas\n\n` +
         `📺 **Canal Setup Venda:** ${ch(c.CANAL_VENDA_BTN)}\n` +
-        `📬 **Canal Log/Aprovação:** ${ch(c.CANAL_VENDA_LOG)}\n\n` +
+        `📬 **Canal Log/Aprovação:** ${ch(c.CANAL_VENDA_LOG)}\n` +
+        `📦 **Produtos predefinidos:** ${(c.PRODUTOS_VENDA?.length > 0) ? c.PRODUTOS_VENDA.join(', ') : '`nenhum`'}\n\n` +
         `**Painel:** ${c.VENDA_TITULO}  ·  🎨 #${(c.VENDA_COR ?? 0xFF0000).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
-          btn('cfg_ch_CANAL_VENDA_BTN', '📺 Canal Setup',          ButtonStyle.Primary),
-          btn('cfg_ch_CANAL_VENDA_LOG', '📬 Canal Log/Aprovação',  ButtonStyle.Primary),
-          btn('cfg_painel_venda',       '✏️ Personalizar Painel',  ButtonStyle.Secondary),
+          btn('cfg_ch_CANAL_VENDA_BTN',   '📺 Canal Setup',          ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_VENDA_LOG',   '📬 Canal Log',            ButtonStyle.Primary),
+          btn('cfg_lista_PRODUTOS_VENDA', '📦 Produtos',             ButtonStyle.Secondary),
+          btn('cfg_painel_venda',         '✏️ Personalizar Painel',  ButtonStyle.Secondary),
+        ),
+        new ActionRowBuilder().addComponents(
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],
@@ -480,10 +484,16 @@ async function handleConfigRolesClr(interaction, field) {
   });
 }
 
-// ─── Gerenciar lista de strings (ações predefinidas) ──────────────────────────
+// ─── Gerenciar lista de strings ───────────────────────────────────────────────
+const LISTA_LABELS = {
+  ACOES_PREDEFINIDAS: 'Ações Predefinidas',
+  PRODUTOS_VENDA:     'Produtos de Venda',
+};
+
 async function handleConfigListaBtn(interaction, field) {
   const atual  = config[field] || [];
   const isAcao = field === 'ACOES_PREDEFINIDAS';
+  const label  = LISTA_LABELS[field] || field;
   const rows   = [];
 
   if (atual.length > 0) {
@@ -514,7 +524,7 @@ async function handleConfigListaBtn(interaction, field) {
 
   await interaction.update({
     embeds: [new EmbedBuilder().setColor(0x5865F2).setDescription(
-      `## 📋 ${isAcao ? 'Ações Predefinidas' : field}\n\n` +
+      `## 📋 ${label}\n\n` +
       `**Atuais:**\n${atual.length > 0 ? atual.map((a) => `• ${a}`).join('\n') : '`nenhuma`'}` +
       descExtra,
     )],
@@ -524,9 +534,10 @@ async function handleConfigListaBtn(interaction, field) {
 
 async function handleConfigListaAddBtn(interaction, field) {
   const isAcao = field === 'ACOES_PREDEFINIDAS';
+  const label  = LISTA_LABELS[field] || field;
   const modal  = new ModalBuilder()
     .setCustomId(`modal_cfg_lista_${field}`)
-    .setTitle(isAcao ? 'Adicionar Ação' : 'Adicionar Item');
+    .setTitle(isAcao ? 'Adicionar Ação' : `Adicionar — ${label}`);
   modal.addComponents(
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()

@@ -77,6 +77,7 @@ const {
   handleAusenciaAprovar,
   handleAusenciaReprovar,
   restaurarAusencias,
+  handleAusenciaEncerrar,
 } = require('./handlers/ausencia');
 const { logEntrada, registrarSaida, handleAuditEntry, carregarConvites, handleInviteCreate, handleInviteDelete, handleVoiceStateUpdate } = require('./handlers/log');
 const {
@@ -94,7 +95,14 @@ const {
   handleModalLimparQtd,
 } = require('./handlers/codiguinho');
 const { handleArmasChannel, handleArmasBotao, handleModalArmas, handleArmasAprovar, handleArmasRecusar } = require('./handlers/armas');
-const { handleVendaChannel, handleVendaBotao, handleModalVenda } = require('./handlers/venda');
+const {
+  handleVendaChannel,
+  handleVendaBotao,
+  handleVendaSelectProduto,
+  handleModalVenda,
+  handleVendaConfirmar,
+  handleVendaCancelar,
+} = require('./handlers/venda');
 const { handleEntrarVoz, handleSairVoz, atualizarSessaoVoz } = require('./handlers/voz');
 const { handleRelatorioChamada } = require('./handlers/relatorio_call');
 const {
@@ -886,7 +894,9 @@ client.on('interactionCreate', async (interaction) => {
 
     // String select menus
     if (interaction.isStringSelectMenu()) {
-      if (interaction.customId === 'ticket_tipo_select') {
+      if (interaction.customId === 'venda_sel_produto') {
+        await handleVendaSelectProduto(interaction);
+      } else if (interaction.customId === 'ticket_tipo_select') {
         await handleTicketSelect(interaction);
       } else if (interaction.customId.startsWith('esc_select_')) {
         await handleEscalacaoSelectAcao(interaction);
@@ -948,6 +958,8 @@ client.on('interactionCreate', async (interaction) => {
         await handleAusenciaAprovar(interaction, parts[0], parseInt(parts[1], 10));
       } else if (customId.startsWith('aus_reprovar_')) {
         await handleAusenciaReprovar(interaction, customId.slice('aus_reprovar_'.length));
+      } else if (customId.startsWith('aus_encerrar_')) {
+        await handleAusenciaEncerrar(interaction, customId.slice('aus_encerrar_'.length));
       } else if (customId.startsWith('sorteio_entrar_')) {
         await handleSorteioBtn(interaction, customId.slice('sorteio_entrar_'.length));
       } else if (customId.startsWith('poll_voto_')) {
@@ -1013,6 +1025,10 @@ client.on('interactionCreate', async (interaction) => {
         await handleArmasRecusar(interaction, customId.slice('armas_recusar_'.length));
       } else if (customId === 'venda_criar') {
         await handleVendaBotao(interaction);
+      } else if (customId.startsWith('venda_confirmar_')) {
+        await handleVendaConfirmar(interaction, customId.slice('venda_confirmar_'.length));
+      } else if (customId.startsWith('venda_cancelar_')) {
+        await handleVendaCancelar(interaction, customId.slice('venda_cancelar_'.length));
       } else if (customId === 'cfg_ranking_valor') {
         await handleConfigRankingValor(interaction);
       } else if (customId === 'cfg_esc_cats') {

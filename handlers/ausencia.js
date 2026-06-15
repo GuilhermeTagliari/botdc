@@ -46,9 +46,9 @@ function formatarTempo(ms) {
   return `${totalMin} minuto${totalMin !== 1 ? 's' : ''}`;
 }
 
-function criarContainerAusencia(aus) {
+function criarContainerAusencia(aus, ausId = null) {
   const restante  = aus.endTime - Date.now();
-  const encerrada = restante <= 0;
+  const encerrada = aus.encerrada || restante <= 0;
   const tsRetorno = Math.floor(aus.endTime / 1000);
 
   const texto = encerrada
@@ -63,9 +63,24 @@ function criarContainerAusencia(aus) {
       `📋 **Motivo:** ${aus.motivo}\n\n` +
       `-# Atualizado automaticamente`;
 
-  return new ContainerBuilder()
+  const container = new ContainerBuilder()
     .setAccentColor(encerrada ? 0x57F287 : 0xFEE75C)
     .addTextDisplayComponents(new TextDisplayBuilder().setContent(texto));
+
+  if (!encerrada && ausId) {
+    container
+      .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+      .addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder()
+            .setCustomId(`aus_encerrar_${ausId}`)
+            .setLabel('⏹️ Encerrar Ausência')
+            .setStyle(ButtonStyle.Secondary),
+        ),
+      );
+  }
+
+  return container;
 }
 
 function extrairTexto(msg) {
@@ -205,7 +220,7 @@ async function handleAusenciaAprovar(interaction, userId, dias) {
 
   try {
     const canal = await interaction.guild.channels.fetch(config.CANAL_AUSENCIA_ATIVA);
-    const msg   = await canal.send({ components: [criarContainerAusencia(aus)], flags: MessageFlags.IsComponentsV2 });
+    const msg   = await canal.send({ components: [criarContainerAusencia(aus, ausId)], flags: MessageFlags.IsComponentsV2 });
     aus.messageId = msg.id;
     aus.channelId = canal.id;
   } catch (err) {
@@ -275,7 +290,7 @@ async function atualizarAusencias(client) {
       if (restante <= 0) {
         aus.encerrada = true;
         salvarDados();
-        await msg.edit({ components: [criarContainerAusencia(aus)], flags: MessageFlags.IsComponentsV2 });
+        await msg.edit({ components: [criarContainerAusencia(aus)], flags: MessageFlags.IsComponentsV2 }); // sem ausId: já encerrada
         try {
           const membro = await guild.members.fetch(aus.userId);
           if (config.CARGO_AUSENCIA) {
@@ -286,12 +301,50 @@ async function atualizarAusencias(client) {
             0x57F287));
         } catch {}
       } else {
-        await msg.edit({ components: [criarContainerAusencia(aus)], flags: MessageFlags.IsComponentsV2 });
+        await msg.edit({ components: [criarContainerAusencia(aus, ausId)], flags: MessageFlags.IsComponentsV2 });
       }
     } catch (err) {
       console.error(`[${new Date().toISOString()}] Erro ao atualizar ausência ${ausId}:`, err.message);
     }
   }
+}
+
+async function handleAusenciaEncerrar(interaction, ausId) {
+  const aus = ausencias.get(ausId);
+  if (!aus || aus.encerrada) {
+    await interaction.reply({ content: '⚠️ Ausência não encontrada ou já encerrada.', ephemeral: true });
+    return;
+  }
+
+  const isProprioMembro = interaction.user.id === aus.userId;
+  const isAdmin         = temPermissao(interaction.member, config.CARGOS_AUSENCIA_ADM);
+
+  if (!isProprioMembro && !isAdmin) {
+    await interaction.reply({ content: '❌ Apenas o próprio membro ou a staff pode encerrar esta ausência.', ephemeral: true });
+    return;
+  }
+
+  await interaction.deferUpdate();
+
+  aus.encerrada = true;
+  salvarDados();
+
+  await interaction.editReply({
+    components: [criarContainerAusencia(aus)],
+    flags: MessageFlags.IsComponentsV2,
+  });
+
+  try {
+    const membro = await interaction.guild.members.fetch(aus.userId);
+    if (config.CARGO_AUSENCIA) {
+      try { await membro.roles.remove(config.CARGO_AUSENCIA); } catch {}
+    }
+    if (!isProprioMembro) {
+      await membro.send(dmEmbed('🏠 Ausência Encerrada',
+        `Sua ausência no servidor **${interaction.guild.name}** foi encerrada antecipadamente pela staff.\n\n📋 **Motivo original:** ${aus.motivo}\n\n-# Bem-vindo(a) de volta!`,
+        0x57F287));
+    }
+  } catch {}
 }
 
 async function restaurarAusencias(client) {
@@ -310,5 +363,6 @@ module.exports = {
   handleModalAusencia,
   handleAusenciaAprovar,
   handleAusenciaReprovar,
+  handleAusenciaEncerrar,
   restaurarAusencias,
 };

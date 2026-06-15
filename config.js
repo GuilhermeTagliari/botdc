@@ -75,6 +75,7 @@ const config = {
   CARGO_HIER_10: process.env.CARGO_HIER_10,
 
   RANKING_PEDIR_VALOR: false, // pede o valor da ação ao registrar vitória
+  PRODUTOS_VENDA: [],
 
   // ─── Categorias de escalação ──────────────────────────────────────────────
   CATEGORIAS_ESCALACAO: [
