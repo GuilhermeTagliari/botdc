@@ -37,6 +37,7 @@ const config = {
 
   CANAL_ARMAS_BTN:       process.env.CANAL_ARMAS_BTN,
   CANAL_ARMAS_LOG:       process.env.CANAL_ARMAS_LOG,
+  CARGOS_ARMAS_ADM:      parseIds(process.env.CARGOS_ARMAS_ADM),
 
   CANAL_CODIGUINHO_BTN:  process.env.CANAL_CODIGUINHO_BTN,
   CANAL_CODIGUINHO_LOG:  process.env.CANAL_CODIGUINHO_LOG,

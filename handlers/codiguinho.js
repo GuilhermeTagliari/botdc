@@ -14,6 +14,7 @@ const fs   = require('fs');
 const path = require('path');
 const config = require('../config');
 const { temPermissao } = require('../utils/permissao');
+const { dmEmbed } = require('../utils/dm');
 
 const ARQUIVO = path.join(__dirname, '../data/codiguinhos.json');
 
@@ -176,12 +177,9 @@ async function handleAprovar(interaction, reqId) {
   let enviouDM = false;
   try {
     const membro = await interaction.guild.members.fetch(req.userId);
-    await membro.send(
-      `## 🎟️  Seus Codiguinhos\n\n` +
-      `Olá, **${req.nome}**! Sua solicitação foi aprovada.\n\n` +
-      `${listaCodigos}\n\n` +
-      `-# Aprovado por <@${interaction.user.id}> · <t:${Math.floor(Date.now() / 1000)}:f>`,
-    );
+    await membro.send(dmEmbed('🎟️ Seus Codiguinhos',
+      `Olá, **${req.nome}**! Sua solicitação foi aprovada.\n\n${listaCodigos}\n\n-# Aprovado por <@${interaction.user.id}> · <t:${Math.floor(Date.now() / 1000)}:f>`,
+      0x57F287));
     enviouDM = true;
   } catch {}
 
@@ -223,11 +221,9 @@ async function handleRecusar(interaction, reqId) {
 
   try {
     const membro = await interaction.guild.members.fetch(req.userId);
-    await membro.send(
-      `## ❌  Solicitação Recusada\n\n` +
-      `Olá, **${req.nome}**! Sua solicitação de codiguinho foi recusada.\n\n` +
-      `-# <t:${Math.floor(Date.now() / 1000)}:f>`,
-    );
+    await membro.send(dmEmbed('❌ Solicitação Recusada',
+      `Olá, **${req.nome}**! Sua solicitação de codiguinho foi recusada.\n\n-# <t:${Math.floor(Date.now() / 1000)}:f>`,
+      0xED4245));
   } catch {}
 
   const resultContainer = new ContainerBuilder()

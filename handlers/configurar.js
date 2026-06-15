@@ -165,14 +165,18 @@ function buildSecao(secao) {
       embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
         `## 🔫 Armas\n\n` +
         `📺 **Canal Setup Armas:** ${ch(c.CANAL_ARMAS_BTN)}\n` +
-        `📬 **Canal Log Armas:** ${ch(c.CANAL_ARMAS_LOG)}\n\n` +
+        `📬 **Canal Log Armas:** ${ch(c.CANAL_ARMAS_LOG)}\n` +
+        `👑 **Cargos Aprovadores:** ${rls(c.CARGOS_ARMAS_ADM)}\n\n` +
         `**Painel:** ${c.ARMAS_TITULO}  ·  🎨 #${(c.ARMAS_COR ?? 0xFF0000).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
-          btn('cfg_ch_CANAL_ARMAS_BTN',  '📺 Canal Setup',         ButtonStyle.Primary),
-          btn('cfg_ch_CANAL_ARMAS_LOG',  '📬 Canal Log',           ButtonStyle.Primary),
-          btn('cfg_painel_armas',        '✏️ Personalizar Painel', ButtonStyle.Secondary),
+          btn('cfg_ch_CANAL_ARMAS_BTN',    '📺 Canal Setup',         ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_ARMAS_LOG',    '📬 Canal Log',           ButtonStyle.Primary),
+          btn('cfg_roles_CARGOS_ARMAS_ADM','👑 Cargos Aprovadores',  ButtonStyle.Secondary),
+          btn('cfg_painel_armas',          '✏️ Personalizar Painel', ButtonStyle.Secondary),
+        ),
+        new ActionRowBuilder().addComponents(
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],

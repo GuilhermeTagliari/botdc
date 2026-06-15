@@ -13,6 +13,8 @@ const {
   MessageFlags,
 } = require('discord.js');
 const config = require('../config');
+const { temPermissao } = require('../utils/permissao');
+const { dmEmbed } = require('../utils/dm');
 
 async function handleArmasChannel(client, guild) {
   try {
@@ -134,6 +136,10 @@ function extrairTexto(msg) {
 }
 
 async function handleArmasAprovar(interaction, userId) {
+  if (!temPermissao(interaction.member, config.CARGOS_ARMAS_ADM)) {
+    await interaction.reply({ content: '❌ Você não tem permissão para aprovar solicitações de armas.', ephemeral: true });
+    return;
+  }
   await interaction.deferUpdate();
   const texto = extrairTexto(interaction.message);
   const container = new ContainerBuilder()
@@ -145,11 +151,17 @@ async function handleArmasAprovar(interaction, userId) {
 
   try {
     const membro = await interaction.guild.members.fetch(userId);
-    await membro.send(`✅ Sua solicitação de armas foi **aprovada** no servidor **${interaction.guild.name}**!`);
+    await membro.send(dmEmbed('✅ Solicitação Aprovada',
+      `Sua solicitação de armas foi **aprovada** no servidor **${interaction.guild.name}**!\n\n-# Aprovado por <@${interaction.user.id}>`,
+      0x57F287));
   } catch {}
 }
 
 async function handleArmasRecusar(interaction, userId) {
+  if (!temPermissao(interaction.member, config.CARGOS_ARMAS_ADM)) {
+    await interaction.reply({ content: '❌ Você não tem permissão para recusar solicitações de armas.', ephemeral: true });
+    return;
+  }
   await interaction.deferUpdate();
   const texto = extrairTexto(interaction.message);
   const container = new ContainerBuilder()
@@ -161,7 +173,9 @@ async function handleArmasRecusar(interaction, userId) {
 
   try {
     const membro = await interaction.guild.members.fetch(userId);
-    await membro.send(`❌ Sua solicitação de armas foi **recusada** no servidor **${interaction.guild.name}**.`);
+    await membro.send(dmEmbed('❌ Solicitação Recusada',
+      `Sua solicitação de armas foi **recusada** no servidor **${interaction.guild.name}**.\n\n-# Recusado por <@${interaction.user.id}>`,
+      0xED4245));
   } catch {}
 }
 
