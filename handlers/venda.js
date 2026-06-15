@@ -16,8 +16,6 @@ const {
 } = require('discord.js');
 const config = require('../config');
 
-const IMG = 'https://cdn.discordapp.com/attachments/1497039765118255282/1497069523269058651/Logo_CRX_com_brilho_metalico_e_vermelho.jpg?ex=69ee2864&is=69ecd6e4&hm=27a99f4e3c95b941f73a2c4b924fd805b34d59519b976a2445c4d875f5b6c5fc&';
-
 function parsearNick(member) {
   const nick = member.nickname || member.user.username;
   const partes = nick.split(' | ');
@@ -40,27 +38,22 @@ async function handleVendaChannel(client, guild) {
     }
 
     const container = new ContainerBuilder()
-      .setAccentColor(0xFF0000)
+      .setAccentColor(config.VENDA_COR ?? 0xFF0000)
       .addMediaGalleryComponents(
         new MediaGalleryBuilder().addItems(
-          new MediaGalleryItemBuilder().setURL(IMG),
+          new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO),
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-          '# REGISTRO DE VENDA — CRX\n\n' +
-          'Clique no botão abaixo para registrar uma venda.\n\n' +
-          '**1.** Clique em **Registrar Venda**\n' +
-          '**2.** Preencha os dados no formulário\n' +
-          '**3.** Envie a foto como comprovante no canal criado\n\n' +
-          '-# Somente você e a staff terão acesso ao canal.',
+          `# ${config.VENDA_TITULO}\n\n${config.VENDA_DESC}`,
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addActionRowComponents(
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('venda_criar').setLabel('💰 Registrar Venda').setStyle(ButtonStyle.Danger),
+          new ButtonBuilder().setCustomId('venda_criar').setLabel(config.VENDA_BTN).setStyle(ButtonStyle.Danger),
         ),
       );
 

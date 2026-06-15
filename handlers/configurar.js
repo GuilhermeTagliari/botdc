@@ -20,6 +20,7 @@ const SECOES = [
   { value: 'venda',        label: 'Vendas',                    emoji: '💰', description: 'Canal e categoria de venda' },
   { value: 'armas',        label: 'Armas',                     emoji: '🔫', description: 'Canal de solicitação e log' },
   { value: 'codiguinho',   label: 'Codiguinho',                emoji: '🎟️', description: 'Canais e cargos do sistema de codiguinhos' },
+  { value: 'ausencia',     label: 'Ausência',                  emoji: '🏖️', description: 'Canais e cargo de ausência' },
   { value: 'ticket',       label: 'Ticket',                    emoji: '🎫', description: 'Canal e categoria de ticket' },
   { value: 'ranking',      label: 'Ranking',                   emoji: '📊', description: 'Canal de ranking' },
   { value: 'logs',         label: 'Logs',                      emoji: '📝', description: 'Canais de log' },
@@ -73,7 +74,8 @@ function buildSecao(secao) {
         `📺 **Canal Recrutamento:** ${ch(c.CANAL_RECRUTAMENTO)}\n` +
         `📬 **Canal Aprovação:** ${ch(c.CANAL_APROVACAO)}\n` +
         `✅ **Cargo Aprovado:** ${rl(c.CARGO_APROVADO)}\n` +
-        `👥 **Cargos Aprovadores:** ${rls(c.CARGOS_APROVACAO)}`,
+        `👥 **Cargos Aprovadores:** ${rls(c.CARGOS_APROVACAO)}\n\n` +
+        `**Painel:** ${c.RECRUTAMENTO_TITULO}  ·  🎨 #${(c.RECRUTAMENTO_COR ?? 0x3498DB).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
@@ -82,7 +84,8 @@ function buildSecao(secao) {
           btn('cfg_role_CARGO_APROVADO',   '✅ Cargo Aprovado',     ButtonStyle.Primary),
         ),
         new ActionRowBuilder().addComponents(
-          btn('cfg_roles_CARGOS_APROVACAO', '👥 Cargos Aprovadores', ButtonStyle.Secondary),
+          btn('cfg_roles_CARGOS_APROVACAO',  '👥 Cargos Aprovadores', ButtonStyle.Secondary),
+          btn('cfg_painel_recrutamento',     '✏️ Personalizar Painel', ButtonStyle.Secondary),
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],
@@ -95,7 +98,9 @@ function buildSecao(secao) {
         `⚔️ **Canal Escalações:** ${ch(c.CANAL_ESCALACAO)}\n` +
         `🗂️ **Canal Controle:** ${ch(c.CANAL_CONTROLE)}\n` +
         `👥 **Cargos:** ${rls(c.CARGOS_ESCALACAO)}\n` +
-        `📋 **Ações Predefinidas:** ${lst(c.ACOES_PREDEFINIDAS)}`,
+        `📻 **Rádio na escalação:** ${c.ESCALACAO_RADIO ? '✅ Ativado' : '❌ Desativado'}\n` +
+        `📋 **Ações Predefinidas:** ${(c.ACOES_PREDEFINIDAS ?? []).length} configurada(s)\n\n` +
+        `**Painel:** ${c.ESCALACAO_TITULO}  ·  🎨 #${(c.ESCALACAO_COR ?? 0x3498DB).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
@@ -106,6 +111,10 @@ function buildSecao(secao) {
         new ActionRowBuilder().addComponents(
           btn('cfg_roles_CARGOS_ESCALACAO',  '👥 Cargos',             ButtonStyle.Secondary),
           btn('cfg_lista_ACOES_PREDEFINIDAS','📋 Ações Predefinidas',  ButtonStyle.Secondary),
+          btn('cfg_escradio',                c.ESCALACAO_RADIO ? '📻 Rádio: ✅' : '📻 Rádio: ❌', ButtonStyle.Secondary),
+        ),
+        new ActionRowBuilder().addComponents(
+          btn('cfg_painel_escalacao', '✏️ Personalizar Painel', ButtonStyle.Secondary),
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],
@@ -117,7 +126,8 @@ function buildSecao(secao) {
         `📺 **Canal Setup Farm:** ${ch(c.CANAL_FARM_BTN)}\n` +
         `📁 **Categoria Farm:** ${ch(c.CATEGORIA_FARM)}\n` +
         `👑 **Cargos Farm ADM:** ${rls(c.CARGOS_FARM_ADM)}\n` +
-        `📁 **Categoria Farm ADM:** ${ch(c.CATEGORIA_FARM_ADM)}`,
+        `📁 **Categoria Farm ADM:** ${ch(c.CATEGORIA_FARM_ADM)}\n\n` +
+        `**Painel:** ${c.FARM_TITULO}  ·  🎨 #${(c.FARM_COR ?? 0x57F287).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
@@ -126,7 +136,8 @@ function buildSecao(secao) {
           btn('cfg_ch_CATEGORIA_FARM_ADM', '📁 Cat. ADM',    ButtonStyle.Primary),
         ),
         new ActionRowBuilder().addComponents(
-          btn('cfg_roles_CARGOS_FARM_ADM', '👑 Cargos ADM', ButtonStyle.Secondary),
+          btn('cfg_roles_CARGOS_FARM_ADM', '👑 Cargos ADM',          ButtonStyle.Secondary),
+          btn('cfg_painel_farm',           '✏️ Personalizar Painel', ButtonStyle.Secondary),
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],
@@ -136,12 +147,14 @@ function buildSecao(secao) {
       embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
         `## 💰 Vendas\n\n` +
         `📺 **Canal Setup Venda:** ${ch(c.CANAL_VENDA_BTN)}\n` +
-        `📁 **Categoria Venda:** ${ch(c.CATEGORIA_VENDA)}`,
+        `📁 **Categoria Venda:** ${ch(c.CATEGORIA_VENDA)}\n\n` +
+        `**Painel:** ${c.VENDA_TITULO}  ·  🎨 #${(c.VENDA_COR ?? 0xFF0000).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
-          btn('cfg_ch_CANAL_VENDA_BTN', '📺 Canal Setup', ButtonStyle.Primary),
-          btn('cfg_ch_CATEGORIA_VENDA', '📁 Categoria',   ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_VENDA_BTN',  '📺 Canal Setup',         ButtonStyle.Primary),
+          btn('cfg_ch_CATEGORIA_VENDA',  '📁 Categoria',           ButtonStyle.Primary),
+          btn('cfg_painel_venda',        '✏️ Personalizar Painel', ButtonStyle.Secondary),
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],
@@ -151,12 +164,14 @@ function buildSecao(secao) {
       embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
         `## 🔫 Armas\n\n` +
         `📺 **Canal Setup Armas:** ${ch(c.CANAL_ARMAS_BTN)}\n` +
-        `📬 **Canal Log Armas:** ${ch(c.CANAL_ARMAS_LOG)}`,
+        `📬 **Canal Log Armas:** ${ch(c.CANAL_ARMAS_LOG)}\n\n` +
+        `**Painel:** ${c.ARMAS_TITULO}  ·  🎨 #${(c.ARMAS_COR ?? 0xFF0000).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
-          btn('cfg_ch_CANAL_ARMAS_BTN', '📺 Canal Setup', ButtonStyle.Primary),
-          btn('cfg_ch_CANAL_ARMAS_LOG', '📬 Canal Log',   ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_ARMAS_BTN',  '📺 Canal Setup',         ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_ARMAS_LOG',  '📬 Canal Log',           ButtonStyle.Primary),
+          btn('cfg_painel_armas',        '✏️ Personalizar Painel', ButtonStyle.Secondary),
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],
@@ -167,15 +182,42 @@ function buildSecao(secao) {
         `## 🎟️ Codiguinho\n\n` +
         `📺 **Canal Setup:** ${ch(c.CANAL_CODIGUINHO_BTN)}\n` +
         `📬 **Canal Aprovação:** ${ch(c.CANAL_CODIGUINHO_LOG)}\n` +
-        `👥 **Cargos Admin:** ${rls(c.CARGOS_CODIGUINHO_ADM)}`,
+        `👥 **Cargos Admin:** ${rls(c.CARGOS_CODIGUINHO_ADM)}\n\n` +
+        `**Painel:** ${c.CODIGUINHO_TITULO}  ·  🎨 #${(c.CODIGUINHO_COR ?? 0xFF0000).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
-          btn('cfg_ch_CANAL_CODIGUINHO_BTN',   '📺 Canal Setup',     ButtonStyle.Primary),
-          btn('cfg_ch_CANAL_CODIGUINHO_LOG',   '📬 Canal Aprovação', ButtonStyle.Primary),
-          btn('cfg_roles_CARGOS_CODIGUINHO_ADM', '👥 Cargos Admin',  ButtonStyle.Secondary),
+          btn('cfg_ch_CANAL_CODIGUINHO_BTN',     '📺 Canal Setup',     ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_CODIGUINHO_LOG',     '📬 Canal Aprovação', ButtonStyle.Primary),
+          btn('cfg_roles_CARGOS_CODIGUINHO_ADM', '👥 Cargos Admin',    ButtonStyle.Secondary),
         ),
-        new ActionRowBuilder().addComponents(btn('cfg_back', '← Menu', ButtonStyle.Danger)),
+        new ActionRowBuilder().addComponents(
+          btn('cfg_painel_codiguinho', '✏️ Personalizar Painel', ButtonStyle.Secondary),
+          btn('cfg_back', '← Menu', ButtonStyle.Danger),
+        ),
+      ],
+    };
+
+    case 'ausencia': return {
+      embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
+        `## 🏖️ Ausência\n\n` +
+        `📺 **Canal Setup:** ${ch(c.CANAL_AUSENCIA_BTN)}\n` +
+        `📬 **Canal Aprovação:** ${ch(c.CANAL_AUSENCIA_APROVACAO)}\n` +
+        `📋 **Canal Ativas:** ${ch(c.CANAL_AUSENCIA_ATIVA)}\n` +
+        `🏷️ **Cargo Ausência:** ${rl(c.CARGO_AUSENCIA)}\n\n` +
+        `**Painel:** ${c.AUSENCIA_TITULO}  ·  🎨 #${(c.AUSENCIA_COR ?? 0xFEE75C).toString(16).padStart(6,'0').toUpperCase()}`,
+      ),
+      rows: [
+        new ActionRowBuilder().addComponents(
+          btn('cfg_ch_CANAL_AUSENCIA_BTN',       '📺 Canal Setup',     ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_AUSENCIA_APROVACAO', '📬 Canal Aprovação', ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_AUSENCIA_ATIVA',     '📋 Canal Ativas',    ButtonStyle.Primary),
+        ),
+        new ActionRowBuilder().addComponents(
+          btn('cfg_role_CARGO_AUSENCIA', '🏷️ Cargo Ausência',       ButtonStyle.Primary),
+          btn('cfg_painel_ausencia',     '✏️ Personalizar Painel',  ButtonStyle.Secondary),
+          btn('cfg_back', '← Menu', ButtonStyle.Danger),
+        ),
       ],
     };
 
@@ -183,12 +225,14 @@ function buildSecao(secao) {
       embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
         `## 🎫 Ticket\n\n` +
         `📺 **Canal Setup Ticket:** ${ch(c.CANAL_TICKET_BTN)}\n` +
-        `📁 **Categoria Ticket:** ${ch(c.CATEGORIA_TICKET)}`,
+        `📁 **Categoria Ticket:** ${ch(c.CATEGORIA_TICKET)}\n\n` +
+        `**Painel:** ${c.TICKET_TITULO}  ·  🎨 #${(c.TICKET_COR ?? 0x3498DB).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
-          btn('cfg_ch_CANAL_TICKET_BTN', '📺 Canal Setup', ButtonStyle.Primary),
-          btn('cfg_ch_CATEGORIA_TICKET', '📁 Categoria',   ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_TICKET_BTN', '📺 Canal Setup',         ButtonStyle.Primary),
+          btn('cfg_ch_CATEGORIA_TICKET', '📁 Categoria',           ButtonStyle.Primary),
+          btn('cfg_painel_ticket',       '✏️ Personalizar Painel', ButtonStyle.Secondary),
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],
@@ -260,13 +304,14 @@ function buildSecao(secao) {
           btn('cfg_setup_recrutamento', '📋 Recrutamento', ButtonStyle.Success),
           btn('cfg_setup_escalacao',    '⚔️ Escalação',    ButtonStyle.Success),
           btn('cfg_setup_farm',         '🌾 Farm',         ButtonStyle.Success),
+          btn('cfg_setup_ausencia',     '🏖️ Ausência',     ButtonStyle.Success),
         ),
         new ActionRowBuilder().addComponents(
-          btn('cfg_setup_venda',       '💰 Vendas',      ButtonStyle.Success),
-          btn('cfg_setup_armas',       '🔫 Armas',       ButtonStyle.Success),
-          btn('cfg_setup_ticket',      '🎫 Ticket',      ButtonStyle.Success),
-          btn('cfg_setup_ranking',     '📊 Ranking',     ButtonStyle.Success),
-          btn('cfg_setup_codiguinho',  '🎟️ Codiguinho',  ButtonStyle.Success),
+          btn('cfg_setup_venda',      '💰 Vendas',     ButtonStyle.Success),
+          btn('cfg_setup_armas',      '🔫 Armas',      ButtonStyle.Success),
+          btn('cfg_setup_ticket',     '🎫 Ticket',     ButtonStyle.Success),
+          btn('cfg_setup_ranking',    '📊 Ranking',    ButtonStyle.Success),
+          btn('cfg_setup_codiguinho', '🎟️ Codiguinho', ButtonStyle.Success),
         ),
         new ActionRowBuilder().addComponents(btn('cfg_back', '← Menu', ButtonStyle.Danger)),
       ],
@@ -410,42 +455,59 @@ async function handleConfigRolesClr(interaction, field) {
 
 // ─── Gerenciar lista de strings (ações predefinidas) ──────────────────────────
 async function handleConfigListaBtn(interaction, field) {
-  const atual = config[field] || [];
-  const rows  = [];
+  const atual  = config[field] || [];
+  const isAcao = field === 'ACOES_PREDEFINIDAS';
+  const rows   = [];
 
   if (atual.length > 0) {
+    const opts = atual.map((item, i) => {
+      let label = item;
+      if (isAcao) {
+        const idx = item.lastIndexOf(':');
+        if (idx >= 0) label = `${item.slice(0, idx).trim()} (${item.slice(idx + 1).trim()} vagas)`;
+      }
+      if (label.length > 100) label = label.slice(0, 97) + '...';
+      return { label, value: String(i) };
+    });
     rows.push(new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId(`cfg_lista_rm_${field}`)
-        .setPlaceholder('❌ Remover ação...')
-        .addOptions(atual.map((item, i) => ({ label: item, value: String(i) }))),
+        .setPlaceholder('❌ Remover item...')
+        .addOptions(opts),
     ));
   }
 
   rows.push(new ActionRowBuilder().addComponents(
-    btn(`cfg_lista_add_${field}`, '➕ Adicionar Ação', ButtonStyle.Success),
-    btn(`cfg_lista_clr_${field}`, '🗑️ Limpar Tudo',   ButtonStyle.Danger),
+    btn(`cfg_lista_add_${field}`, isAcao ? '➕ Adicionar Ação' : '➕ Adicionar', ButtonStyle.Success),
+    btn(`cfg_lista_clr_${field}`, '🗑️ Limpar Tudo', ButtonStyle.Danger),
     btn('cfg_back', '← Menu', ButtonStyle.Secondary),
   ));
 
+  const descExtra = isAcao ? '\n\n-# Formato: **Nome:Quantidade** — ex: `Banco Central:11`' : '';
+
   await interaction.update({
     embeds: [new EmbedBuilder().setColor(0x5865F2).setDescription(
-      `## 📋 Ações Predefinidas\n\n**Atuais:** ${lst(atual)}\n\n-# Selecione uma ação acima para removê-la, ou clique em Adicionar.`,
+      `## 📋 ${isAcao ? 'Ações Predefinidas' : field}\n\n` +
+      `**Atuais:**\n${atual.length > 0 ? atual.map((a) => `• ${a}`).join('\n') : '`nenhuma`'}` +
+      descExtra,
     )],
     components: rows,
   });
 }
 
 async function handleConfigListaAddBtn(interaction, field) {
-  const modal = new ModalBuilder().setCustomId(`modal_cfg_lista_${field}`).setTitle('Adicionar Ação');
+  const isAcao = field === 'ACOES_PREDEFINIDAS';
+  const modal  = new ModalBuilder()
+    .setCustomId(`modal_cfg_lista_${field}`)
+    .setTitle(isAcao ? 'Adicionar Ação' : 'Adicionar Item');
   modal.addComponents(
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('cfg_lista_valor')
-        .setLabel('Nome da ação')
-        .setPlaceholder('Ex: Banco Central, Porto, Açougue...')
+        .setLabel(isAcao ? 'Nome:Quantidade (ex: Banco Central:11)' : 'Valor')
+        .setPlaceholder(isAcao ? 'Ex: Banco Central:11' : 'Digite o valor...')
         .setStyle(TextInputStyle.Short)
-        .setMaxLength(60)
+        .setMaxLength(80)
         .setRequired(true),
     ),
   );
@@ -494,6 +556,126 @@ async function handleConfigListaClr(interaction, field) {
   });
 }
 
+// ─── Personalizar painel (título, desc, cor, botão, imagem) ───────────────────
+const PAINEL_KEYS = {
+  recrutamento: { titulo: 'RECRUTAMENTO_TITULO', desc: 'RECRUTAMENTO_DESC', cor: 'RECRUTAMENTO_COR', btnKey: 'RECRUTAMENTO_BTN' },
+  escalacao:    { titulo: 'ESCALACAO_TITULO',    desc: 'ESCALACAO_DESC',    cor: 'ESCALACAO_COR',    btnKey: null },
+  farm:         { titulo: 'FARM_TITULO',         desc: 'FARM_DESC',         cor: 'FARM_COR',         btnKey: 'FARM_BTN' },
+  venda:        { titulo: 'VENDA_TITULO',        desc: 'VENDA_DESC',        cor: 'VENDA_COR',        btnKey: 'VENDA_BTN' },
+  armas:        { titulo: 'ARMAS_TITULO',        desc: 'ARMAS_DESC',        cor: 'ARMAS_COR',        btnKey: 'ARMAS_BTN' },
+  codiguinho:   { titulo: 'CODIGUINHO_TITULO',   desc: 'CODIGUINHO_DESC',   cor: 'CODIGUINHO_COR',   btnKey: 'CODIGUINHO_BTN' },
+  ticket:       { titulo: 'TICKET_TITULO',       desc: 'TICKET_DESC',       cor: 'TICKET_COR',       btnKey: null },
+  ausencia:     { titulo: 'AUSENCIA_TITULO',     desc: 'AUSENCIA_DESC',     cor: 'AUSENCIA_COR',     btnKey: 'AUSENCIA_BTN' },
+};
+
+async function handleConfigPainelBtn(interaction, modulo) {
+  const keys = PAINEL_KEYS[modulo];
+  if (!keys) { await interaction.reply({ content: '❌ Módulo não suporta personalização.', ephemeral: true }); return; }
+
+  const corNum = config[keys.cor] ?? 0;
+  const corHex = corNum.toString(16).padStart(6, '0').toUpperCase();
+
+  const modal = new ModalBuilder()
+    .setCustomId(`modal_cfg_painel_${modulo}`)
+    .setTitle(`Personalizar — ${modulo}`);
+
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('painel_titulo')
+        .setLabel('Título do painel')
+        .setValue(String(config[keys.titulo] ?? ''))
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(80)
+        .setRequired(true),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('painel_desc')
+        .setLabel('Descrição (suporta markdown)')
+        .setValue(String(config[keys.desc] ?? ''))
+        .setStyle(TextInputStyle.Paragraph)
+        .setMaxLength(1000)
+        .setRequired(false),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('painel_cor')
+        .setLabel('Cor (hex sem # — ex: 3498DB)')
+        .setValue(corHex)
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(6)
+        .setRequired(false),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('painel_btn')
+        .setLabel('Texto do botão principal (se houver)')
+        .setValue(keys.btnKey ? String(config[keys.btnKey] ?? '') : '—')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(60)
+        .setRequired(false),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('painel_img')
+        .setLabel('URL da imagem padrão (deixe em branco p/ manter)')
+        .setValue(String(config.IMG_PADRAO ?? ''))
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(500)
+        .setRequired(false),
+    ),
+  );
+
+  await interaction.showModal(modal);
+}
+
+async function handleModalConfigPainel(interaction, modulo) {
+  const keys = PAINEL_KEYS[modulo];
+  if (!keys) { await interaction.reply({ content: '❌ Módulo desconhecido.', ephemeral: true }); return; }
+
+  const titulo = interaction.fields.getTextInputValue('painel_titulo').trim();
+  const desc   = interaction.fields.getTextInputValue('painel_desc').trim();
+  const corHex = interaction.fields.getTextInputValue('painel_cor').trim().replace(/^#/, '').replace(/^0x/i, '');
+  const btnTxt = interaction.fields.getTextInputValue('painel_btn').trim();
+  const imgUrl = interaction.fields.getTextInputValue('painel_img').trim();
+
+  const updates = {};
+  if (titulo) updates[keys.titulo] = titulo;
+  if (desc)   updates[keys.desc]   = desc;
+
+  if (corHex && /^[0-9A-Fa-f]{6}$/.test(corHex)) {
+    updates[keys.cor] = parseInt(corHex, 16);
+  }
+
+  if (keys.btnKey && btnTxt && btnTxt !== '—') {
+    updates[keys.btnKey] = btnTxt;
+  }
+
+  if (imgUrl && imgUrl.startsWith('http')) {
+    updates['IMG_PADRAO'] = imgUrl;
+  }
+
+  config.salvarConfig(updates);
+  await interaction.reply({
+    content: `✅ Painel de **${modulo}** atualizado! Use **Setup → Enviar Mensagens** para repostar no canal.`,
+    ephemeral: true,
+  });
+}
+
+// ─── Toggle rádio na escalação ─────────────────────────────────────────────────
+async function handleConfigEscRadio(interaction) {
+  const novo = !config.ESCALACAO_RADIO;
+  config.salvarConfig({ ESCALACAO_RADIO: novo });
+  await interaction.update({
+    embeds: [new EmbedBuilder().setColor(0x57F287).setDescription(
+      `✅ Campo de rádio na escalação: **${novo ? '✅ Ativado' : '❌ Desativado'}**\n\n` +
+      `-# Quando ativado, ao criar uma escalação será solicitada a frequência de rádio.`,
+    )],
+    components: [new ActionRowBuilder().addComponents(btn('cfg_back', '← Menu', ButtonStyle.Secondary))],
+  });
+}
+
 // ─── Setup — enviar mensagem no canal configurado ──────────────────────────────
 async function handleConfigSetup(interaction, modulo, client) {
   await interaction.deferUpdate();
@@ -508,6 +690,7 @@ async function handleConfigSetup(interaction, modulo, client) {
     ticket:       () => require('./ticket').handleTicketChannel(client, guild),
     ranking:      () => require('./ranking').handleRankingSetup(client, guild),
     codiguinho:   () => require('./codiguinho').handleCodiguinhoChannel(client, guild),
+    ausencia:     () => require('./ausencia').handleAusenciaSetup(client, guild),
   };
 
   const fn = mapa[modulo];
@@ -540,4 +723,7 @@ module.exports = {
   handleConfigListaRm,
   handleConfigListaClr,
   handleConfigSetup,
+  handleConfigPainelBtn,
+  handleModalConfigPainel,
+  handleConfigEscRadio,
 };

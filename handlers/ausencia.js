@@ -17,7 +17,6 @@ const path = require('path');
 const config = require('../config');
 const { dmEmbed } = require('../utils/dm');
 
-const IMG = 'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863&';
 const ARQUIVO = path.join(__dirname, '../data/ausencias.json');
 
 const ausencias = new Map();
@@ -95,21 +94,16 @@ async function handleAusenciaSetup(client, guild) {
     }
 
     const container = new ContainerBuilder()
-      .setAccentColor(0x3498DB)
-      .addMediaGalleryComponents(new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(IMG)))
+      .setAccentColor(config.AUSENCIA_COR ?? 0x3498DB)
+      .addMediaGalleryComponents(new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO)))
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
-        '# SOLICITAR AUSÊNCIA — Never Pure\n\n' +
-        'Precisa se ausentar? Clique no botão abaixo para solicitar sua ausência.\n\n' +
-        '**1.** Clique em **Solicitar Ausência**\n' +
-        '**2.** Informe os dias e o motivo\n' +
-        '**3.** Aguarde a aprovação da staff\n\n' +
-        '-# Ausências não aprovadas serão desconsideradas.',
+        `# ${config.AUSENCIA_TITULO}\n\n${config.AUSENCIA_DESC}`,
       ))
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addActionRowComponents(
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('aus_solicitar').setLabel('🏖️ Solicitar Ausência').setStyle(ButtonStyle.Primary),
+          new ButtonBuilder().setCustomId('aus_solicitar').setLabel(config.AUSENCIA_BTN).setStyle(ButtonStyle.Primary),
         ),
       );
 

@@ -58,8 +58,6 @@ const config = require('../config');
 const { temPermissao } = require('../utils/permissao');
 const { atualizarRanking } = require('./ranking');
 
-const IMG = 'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863&';
-
 const ARQUIVO = path.join(__dirname, '../data/escalacoes.json');
 
 // escId → { acao, quantidade, horario, slots: [], fechada, resultado, messageId, channelId, guildId }
@@ -111,7 +109,7 @@ function botoesResultado(escId) {
 }
 
 function criarContainer(esc, escId) {
-  const { acao, quantidade, horario, slots, fechada, resultado, criadorId } = esc;
+  const { acao, quantidade, horario, slots, fechada, resultado, criadorId, radio } = esc;
   const preenchidos = slots.filter(Boolean).length;
   const cheia       = preenchidos >= quantidade;
   const lista       = slots.map((id, i) => `\`${i + 1}.\` ${id ? `<@${id}>` : '—'}`).join('\n');
@@ -135,10 +133,11 @@ function criarContainer(esc, escId) {
   }
 
   const criadorLine = criadorId ? `  ·  👤 Criado por <@${criadorId}>` : '';
+  const radioLine   = radio ? `\n📻 **Rádio:** ${radio}` : '';
 
   const text =
     `## ⚔️  ${acao}\n\n` +
-    `📊 **Vagas:** **${preenchidos}/${quantidade}**  ·  📈 ${barraProgresso(preenchidos, quantidade)}\n\n` +
+    `📊 **Vagas:** **${preenchidos}/${quantidade}**  ·  📈 ${barraProgresso(preenchidos, quantidade)}${radioLine}\n\n` +
     `**👥 Participantes:**\n${lista || '—'}\n\n` +
     `-# ${statusLine}${criadorLine}`;
 
@@ -167,32 +166,52 @@ async function atualizarMensagem(guild, esc, escId) {
 }
 
 function buildSetupContainer() {
-  return new ContainerBuilder()
-    .setAccentColor(0x3498DB)
+  const acoesPred = (config.ACOES_PREDEFINIDAS ?? []).filter(Boolean);
+
+  const builder = new ContainerBuilder()
+    .setAccentColor(config.ESCALACAO_COR ?? 0x3498DB)
     .addMediaGalleryComponents(
       new MediaGalleryBuilder().addItems(
-        new MediaGalleryItemBuilder().setURL(IMG),
+        new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO),
       ),
     )
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
-        '# ESCALAÇÃO — Never Pure\n\n' +
-        'Selecione a ação no menu abaixo para criar uma escalação.\n\n' +
-        '**1.** Selecione a categoria de ação\n' +
-        '**2.** Aguarde os membros entrarem nos slots\n\n' +
-        '-# Somente Soldado ou superior pode criar escalações.',
+        `# ${config.ESCALACAO_TITULO}\n\n${config.ESCALACAO_DESC}`,
       ),
     )
-    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
-    .addActionRowComponents(makeSelectMenu('esc_select_grande',  '🔴 Ação Grande',  ACOES.grande))
-    .addActionRowComponents(makeSelectMenu('esc_select_media',   '🟡 Ação Média',   ACOES.media))
-    .addActionRowComponents(makeSelectMenu('esc_select_pequena', '🟢 Ação Pequena', ACOES.pequena))
-    .addActionRowComponents(
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true));
+
+  if (acoesPred.length > 0) {
+    const opcoes = acoesPred.slice(0, 25).map((item) => {
+      const idx  = item.lastIndexOf(':');
+      const nome = idx >= 0 ? item.slice(0, idx).trim() : item.trim();
+      const qty  = idx >= 0 ? item.slice(idx + 1).trim() : '?';
+      return { label: `${nome} — ${qty} vagas`, value: `${nome}|${qty}` };
+    });
+    builder.addActionRowComponents(
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('esc_custom').setLabel('✏️ Ação Personalizada').setStyle(ButtonStyle.Secondary),
+        new StringSelectMenuBuilder()
+          .setCustomId('esc_select_predefinida')
+          .setPlaceholder('⚔️ Selecione a ação...')
+          .addOptions(opcoes),
       ),
     );
+  } else {
+    builder
+      .addActionRowComponents(makeSelectMenu('esc_select_grande',  '🔴 Ação Grande',  ACOES.grande))
+      .addActionRowComponents(makeSelectMenu('esc_select_media',   '🟡 Ação Média',   ACOES.media))
+      .addActionRowComponents(makeSelectMenu('esc_select_pequena', '🟢 Ação Pequena', ACOES.pequena));
+  }
+
+  builder.addActionRowComponents(
+    new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId('esc_custom').setLabel('✏️ Ação Personalizada').setStyle(ButtonStyle.Secondary),
+    ),
+  );
+
+  return builder;
 }
 
 async function handleEscalacaoChannel(client, guild) {
@@ -229,7 +248,7 @@ function makeSelectMenu(customId, placeholder, acoes) {
 
 
 function buildModal(nomePreenchido, qtyPreenchido) {
-  const modal = new ModalBuilder().setCustomId('modal_escalacao').setTitle('Criar Escalação Personalizada');
+  const modal = new ModalBuilder().setCustomId('modal_escalacao').setTitle('Criar Escalação');
 
   const acaoInput = new TextInputBuilder()
     .setCustomId('esc_acao')
@@ -253,6 +272,20 @@ function buildModal(nomePreenchido, qtyPreenchido) {
     new ActionRowBuilder().addComponents(qtdInput),
   );
 
+  if (config.ESCALACAO_RADIO) {
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('esc_radio')
+          .setLabel('Frequência de Rádio (opcional)')
+          .setPlaceholder('Ex: 87.5 MHz')
+          .setStyle(TextInputStyle.Short)
+          .setMaxLength(30)
+          .setRequired(false),
+      ),
+    );
+  }
+
   return modal;
 }
 
@@ -261,11 +294,16 @@ async function handleEscalacaoSelectAcao(interaction) {
   const [nome, qty] = value.split('|');
   const quantidade  = parseInt(qty, 10);
 
+  if (config.ESCALACAO_RADIO) {
+    await interaction.showModal(buildModal(nome, quantidade));
+    return;
+  }
+
   await interaction.deferUpdate();
 
   const escId = gerarId();
   const slots = Array(quantidade).fill(null);
-  const esc   = { acao: nome, quantidade, slots, fechada: false, resultado: null, messageId: null, channelId: null, guildId: interaction.guild.id, criadorId: interaction.user.id };
+  const esc   = { acao: nome, quantidade, radio: null, slots, fechada: false, resultado: null, messageId: null, channelId: null, guildId: interaction.guild.id, criadorId: interaction.user.id };
 
   try {
     const canal = await interaction.guild.channels.fetch(config.CANAL_ESCALACAO);
@@ -304,6 +342,8 @@ async function handleModalEscalacao(interaction) {
   const acao      = interaction.fields.getTextInputValue('esc_acao');
   const qtdRaw    = interaction.fields.getTextInputValue('esc_quantidade');
   const quantidade = parseInt(qtdRaw, 10);
+  let radio = null;
+  try { radio = config.ESCALACAO_RADIO ? (interaction.fields.getTextInputValue('esc_radio')?.trim() || null) : null; } catch {}
 
   if (isNaN(quantidade) || quantidade < 1 || quantidade > 100) {
     await interaction.editReply({ content: '❌ Quantidade inválida. Use apenas números entre 1 e 100.' });
@@ -312,7 +352,7 @@ async function handleModalEscalacao(interaction) {
 
   const escId = gerarId();
   const slots  = Array(quantidade).fill(null);
-  const esc    = { acao, quantidade, slots, fechada: false, resultado: null, messageId: null, channelId: null, guildId: interaction.guild.id, criadorId: interaction.user.id };
+  const esc    = { acao, quantidade, radio, slots, fechada: false, resultado: null, messageId: null, channelId: null, guildId: interaction.guild.id, criadorId: interaction.user.id };
 
   try {
     const canal = await interaction.guild.channels.fetch(config.CANAL_ESCALACAO);

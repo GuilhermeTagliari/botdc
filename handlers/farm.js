@@ -20,7 +20,6 @@ const config = require('../config');
 const { temPermissao } = require('../utils/permissao');
 const { dmEmbed } = require('../utils/dm');
 
-const IMG    = 'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863&';
 const ARQUIVO = path.join(__dirname, '../data/farms.json');
 
 const aguardandoFoto  = new Map(); // channelId → { userId, quantidade, horario, expiresAt }
@@ -171,25 +170,20 @@ async function handleFarmChannel(client, guild) {
     }
 
     const container = new ContainerBuilder()
-      .setAccentColor(0x3498DB)
+      .setAccentColor(config.FARM_COR ?? 0x3498DB)
       .addMediaGalleryComponents(
-        new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(IMG)),
+        new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO)),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-          '# SALA DE FARM — Never Pure\n\n' +
-          'Clique no botão abaixo para criar sua sala de farm privada.\n\n' +
-          '**1.** Clique em **Criar Sala**\n' +
-          '**2.** Uma sala privada será criada com seu nome\n' +
-          '**3.** Registre seu farm com quantidade, horário e foto\n\n' +
-          '-# Somente você e a staff terão acesso à sua sala.',
+          `# ${config.FARM_TITULO}\n\n${config.FARM_DESC}`,
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addActionRowComponents(
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('farm_criar').setLabel('🌾 Criar Sala').setStyle(ButtonStyle.Primary),
+          new ButtonBuilder().setCustomId('farm_criar').setLabel(config.FARM_BTN).setStyle(ButtonStyle.Primary),
         ),
       );
 

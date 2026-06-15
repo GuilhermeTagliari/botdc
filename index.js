@@ -6,7 +6,7 @@ const os   = require('os');
 fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
 
 const BOT_START_TIME = Date.now();
-const VERSAO = '2026-06-15';
+const VERSAO = '2026-06-15-v2';
 
 // ─── Single-instance lock (nova instância mata a anterior) ────
 const LOCK_FILE = path.join(__dirname, 'bot.lock');
@@ -94,6 +94,7 @@ const {
 } = require('./handlers/codiguinho');
 const { handleArmasChannel, handleArmasBotao, handleModalArmas } = require('./handlers/armas');
 const { handleVendaChannel, handleVendaBotao, handleModalVenda } = require('./handlers/venda');
+const { handleEntrarVoz, handleSairVoz } = require('./handlers/voz');
 const {
   handleConfigurar,
   handleConfigBack,
@@ -112,6 +113,9 @@ const {
   handleConfigListaRm,
   handleConfigListaClr,
   handleConfigSetup,
+  handleConfigPainelBtn,
+  handleModalConfigPainel,
+  handleConfigEscRadio,
 } = require('./handlers/configurar');
 const {
   handleTicketChannel,
@@ -131,6 +135,7 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildModeration,
+    GatewayIntentBits.GuildVoiceStates,
   ],
   partials: [Partials.Channel],
 });
@@ -362,7 +367,10 @@ const LISTA_COMANDOS = [
       { name: 'cod-admin',        description: 'Painel de gerenciamento do estoque de codiguinhos', defaultMemberPermissions: '8' },
       { name: 'armas-setup',      description: 'Envia o painel de solicitação de armas no canal configurado', defaultMemberPermissions: '8' },
       { name: 'venda-setup',      description: 'Envia o painel de registro de vendas no canal configurado', defaultMemberPermissions: '8' },
-      { name: 'configurar',       description: 'Configura o bot (canais, cargos e ações predefinidas)', defaultMemberPermissions: '8' },
+      { name: 'configurar',   description: 'Configura o bot (canais, cargos e ações predefinidas)', defaultMemberPermissions: '8' },
+      { name: 'entrar-call',  description: 'Bot entra em um canal de voz',                           defaultMemberPermissions: '8',
+        options: [{ name: 'canal', description: 'Canal de voz', type: 7, required: true, channel_types: [2] }] },
+      { name: 'sair-call',    description: 'Bot sai do canal de voz atual',                          defaultMemberPermissions: '8' },
 ];
 
 async function registrarComandos(client) {
@@ -708,7 +716,14 @@ client.on('interactionCreate', async (interaction) => {
             '`/embed-editar <canal> <id> <texto>` — Edita uma mensagem já enviada pelo bot\n' +
             '`/anuncio <canal> <texto>` — Envia anúncio com opção de @everyone\n' +
             '`/sorteio <canal> <prêmio> <tempo>` — Cria um sorteio com botão de participação\n' +
-            '`/poll <pergunta> <opção1> <opção2>` — Cria uma votação com botões\n\n' +
+            '`/poll <pergunta> <opção1> <opção2>` — Cria uma votação com botões\n' +
+            '`/codiguinho-setup` — Painel de codiguinho\n' +
+            '`/cod-admin` — Gerenciar estoque de codiguinhos\n' +
+            '`/armas-setup` — Painel de solicitação de armas\n' +
+            '`/venda-setup` — Painel de registro de vendas\n' +
+            '`/configurar` — Configura o bot (canais, cargos, ações, painel)\n' +
+            '`/entrar-call <canal>` — Bot entra em um canal de voz\n' +
+            '`/sair-call` — Bot sai do canal de voz\n\n' +
             '**🛡️ Moderação**\n' +
             '`/banir <usuário> <motivo>` — Bane um membro\n' +
             '`/kick <usuário> <motivo>` — Expulsa um membro\n' +
@@ -754,6 +769,10 @@ client.on('interactionCreate', async (interaction) => {
         await interaction.editReply({ content: '✅ Painel de vendas enviado!' });
       } else if (interaction.commandName === 'configurar') {
         await handleConfigurar(interaction);
+      } else if (interaction.commandName === 'entrar-call') {
+        await handleEntrarVoz(interaction);
+      } else if (interaction.commandName === 'sair-call') {
+        await handleSairVoz(interaction);
       }
       return;
     }
@@ -781,6 +800,8 @@ client.on('interactionCreate', async (interaction) => {
       else if (interaction.customId === 'modal_venda')           await handleModalVenda(interaction);
       else if (interaction.customId.startsWith('modal_cfg_lista_')) {
         await handleModalConfigLista(interaction, interaction.customId.slice('modal_cfg_lista_'.length));
+      } else if (interaction.customId.startsWith('modal_cfg_painel_')) {
+        await handleModalConfigPainel(interaction, interaction.customId.slice('modal_cfg_painel_'.length));
       }
       return;
     }
@@ -789,11 +810,7 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isStringSelectMenu()) {
       if (interaction.customId === 'ticket_tipo_select') {
         await handleTicketSelect(interaction);
-      } else if (
-        interaction.customId === 'esc_select_grande' ||
-        interaction.customId === 'esc_select_media'  ||
-        interaction.customId === 'esc_select_pequena'
-      ) {
+      } else if (interaction.customId.startsWith('esc_select_')) {
         await handleEscalacaoSelectAcao(interaction);
       } else if (interaction.customId === 'cfg_menu') {
         await handleConfigMenu(interaction);
@@ -912,8 +929,12 @@ client.on('interactionCreate', async (interaction) => {
         await handleVendaBotao(interaction);
       } else if (customId === 'cfg_back') {
         await handleConfigBack(interaction);
+      } else if (customId === 'cfg_escradio') {
+        await handleConfigEscRadio(interaction);
       } else if (customId.startsWith('cfg_setup_')) {
         await handleConfigSetup(interaction, customId.slice('cfg_setup_'.length), client);
+      } else if (customId.startsWith('cfg_painel_')) {
+        await handleConfigPainelBtn(interaction, customId.slice('cfg_painel_'.length));
       } else if (customId.startsWith('cfg_lista_add_')) {
         await handleConfigListaAddBtn(interaction, customId.slice('cfg_lista_add_'.length));
       } else if (customId.startsWith('cfg_lista_clr_')) {

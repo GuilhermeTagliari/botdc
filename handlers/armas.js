@@ -14,8 +14,6 @@ const {
 } = require('discord.js');
 const config = require('../config');
 
-const IMG = 'https://cdn.discordapp.com/attachments/1497039765118255282/1497069523269058651/Logo_CRX_com_brilho_metalico_e_vermelho.jpg?ex=69ee2864&is=69ecd6e4&hm=27a99f4e3c95b941f73a2c4b924fd805b34d59519b976a2445c4d875f5b6c5fc&';
-
 async function handleArmasChannel(client, guild) {
   try {
     const channel = await guild.channels.fetch(config.CANAL_ARMAS_BTN);
@@ -32,27 +30,22 @@ async function handleArmasChannel(client, guild) {
     }
 
     const container = new ContainerBuilder()
-      .setAccentColor(0xFF0000)
+      .setAccentColor(config.ARMAS_COR ?? 0xFF0000)
       .addMediaGalleryComponents(
         new MediaGalleryBuilder().addItems(
-          new MediaGalleryItemBuilder().setURL(IMG),
+          new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO),
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-          '# SOLICITAÇÃO DE ARMAS — CRX\n\n' +
-          'Clique no botão abaixo para solicitar armas e munição.\n\n' +
-          '**1.** Clique em **Solicitar Armas**\n' +
-          '**2.** Preencha o formulário com a arma e quantidade de munição\n' +
-          '**3.** Aguarde a aprovação da staff\n\n' +
-          '-# Solicitações serão analisadas pela equipe.',
+          `# ${config.ARMAS_TITULO}\n\n${config.ARMAS_DESC}`,
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addActionRowComponents(
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('armas_solicitar').setLabel('🔫 Solicitar Armas').setStyle(ButtonStyle.Danger),
+          new ButtonBuilder().setCustomId('armas_solicitar').setLabel(config.ARMAS_BTN).setStyle(ButtonStyle.Danger),
         ),
       );
 

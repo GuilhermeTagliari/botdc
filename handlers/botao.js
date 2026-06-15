@@ -14,8 +14,6 @@ const {
 } = require('discord.js');
 const config = require('../config');
 
-const IMG = 'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863&';
-
 async function handleRecrutamentoChannel(client, guild) {
   try {
     const channel = await guild.channels.fetch(config.CANAL_RECRUTAMENTO);
@@ -35,28 +33,22 @@ async function handleRecrutamentoChannel(client, guild) {
     }
 
     const container = new ContainerBuilder()
-      .setAccentColor(0x3498DB)
+      .setAccentColor(config.RECRUTAMENTO_COR ?? 0x3498DB)
       .addMediaGalleryComponents(
         new MediaGalleryBuilder().addItems(
-          new MediaGalleryItemBuilder().setURL(IMG),
+          new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO),
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-          '# RECRUTAMENTO Never Pure\n\n' +
-          'Quer fazer parte do nosso time? Preencha sua ficha clicando no botão abaixo.\n\n' +
-          '**1.** Clique em **Preencher Ficha**\n' +
-          '**2.** Preencha seus dados no formulário\n' +
-          '**3.** Selecione quem te recrutou\n' +
-          '**4.** Aguarde a análise de um recrutador\n\n' +
-          '-# Você será notificado via DM sobre a decisão.',
+          `# ${config.RECRUTAMENTO_TITULO}\n\n${config.RECRUTAMENTO_DESC}`,
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addActionRowComponents(
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId('abrir_ficha').setLabel('📝 Preencher Ficha').setStyle(ButtonStyle.Primary),
+          new ButtonBuilder().setCustomId('abrir_ficha').setLabel(config.RECRUTAMENTO_BTN).setStyle(ButtonStyle.Primary),
         ),
       );
 

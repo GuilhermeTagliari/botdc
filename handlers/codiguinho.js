@@ -41,23 +41,16 @@ async function handleCodiguinhoChannel(client, guild) {
   if (jaExiste) return;
 
   const container = new ContainerBuilder()
-    .setAccentColor(0xFF0000)
+    .setAccentColor(config.CODIGUINHO_COR ?? 0xFF0000)
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(
-        '## 🎟️  Solicitação de Codiguinho\n\n' +
-        'Clique no botão abaixo para solicitar um codiguinho.\n\n' +
-        '**Como funciona:**\n' +
-        '**1.** Clique em **Solicitar Codiguinho**\n' +
-        '**2.** Informe seu nome e a quantidade desejada\n' +
-        '**3.** Aguarde a aprovação da staff\n' +
-        '**4.** Você receberá o(s) codiguinho(s) via DM\n\n' +
-        '-# Sujeito à disponibilidade de estoque.',
+        `# ${config.CODIGUINHO_TITULO}\n\n${config.CODIGUINHO_DESC}`,
       ),
     )
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addActionRowComponents(
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('cod_solicitar').setLabel('🎟️ Solicitar Codiguinho').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('cod_solicitar').setLabel(config.CODIGUINHO_BTN).setStyle(ButtonStyle.Primary),
       ),
     );
 

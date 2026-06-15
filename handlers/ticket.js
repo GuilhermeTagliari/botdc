@@ -21,8 +21,6 @@ const {
 const config = require('../config');
 const { dmEmbed } = require('../utils/dm');
 
-const IMG = 'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863&';
-
 const TIPOS = [
   { value: 'suporte',  label: 'Suporte',   emoji: '🎫', descricao: 'Ajuda geral ou dúvidas'         },
   { value: 'denuncia', label: 'Denúncia',  emoji: '🚨', descricao: 'Reportar um jogador ou situação' },
@@ -149,20 +147,16 @@ async function handleTicketChannel(client, guild) {
       );
 
     const container = new ContainerBuilder()
-      .setAccentColor(0x3498DB)
+      .setAccentColor(config.TICKET_COR ?? 0x3498DB)
       .addMediaGalleryComponents(
         new MediaGalleryBuilder().addItems(
-          new MediaGalleryItemBuilder().setURL(IMG),
+          new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO),
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-          '# CENTRAL DE ATENDIMENTO\n\n' +
-          'Precisa de ajuda? Selecione a categoria no menu abaixo para abrir um ticket.\n\n' +
-          '**1.** Selecione a categoria de atendimento\n' +
-          '**2.** Descreva sua solicitação\n' +
-          '**3.** Aguarde um membro da staff',
+          `# ${config.TICKET_TITULO}\n\n${config.TICKET_DESC}`,
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
