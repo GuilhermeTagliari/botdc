@@ -12,6 +12,7 @@ const {
   MediaGalleryItemBuilder,
   MessageFlags,
 } = require('discord.js');
+// MediaGalleryBuilder / MediaGalleryItemBuilder usados no handleVendaChannel
 const config = require('../config');
 const { formatarValorBR } = require('../utils/formato');
 
@@ -80,9 +81,18 @@ async function handleVendaBotao(interaction) {
       new TextInputBuilder()
         .setCustomId('venda_produto')
         .setLabel('O que vendeu')
-        .setPlaceholder('Ex: Cocaína, Armas...')
+        .setPlaceholder('Ex: Cocaína, Armas, Lança...')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(100)
+        .setRequired(true),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('venda_quantidade')
+        .setLabel('Quantidade')
+        .setPlaceholder('Ex: 5 unidades, 10 kg...')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(50)
         .setRequired(true),
     ),
     new ActionRowBuilder().addComponents(
@@ -103,15 +113,6 @@ async function handleVendaBotao(interaction) {
         .setMaxLength(10)
         .setRequired(true),
     ),
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('venda_foto')
-        .setLabel('Comprovante — link da imagem (opcional)')
-        .setPlaceholder('Cole o link ou deixe em branco e faça upload no canal após registrar')
-        .setStyle(TextInputStyle.Short)
-        .setMaxLength(500)
-        .setRequired(false),
-    ),
   );
 
   await interaction.showModal(modal);
@@ -121,46 +122,34 @@ async function handleModalVenda(interaction) {
   await interaction.deferReply({ ephemeral: true });
 
   const { member, guild } = interaction;
-  const fac      = interaction.fields.getTextInputValue('venda_fac');
-  const produto  = interaction.fields.getTextInputValue('venda_produto');
-  const parceria = interaction.fields.getTextInputValue('venda_parceria');
-  const valor    = interaction.fields.getTextInputValue('venda_valor');
-  const foto     = interaction.fields.getTextInputValue('venda_foto').trim();
+  const fac        = interaction.fields.getTextInputValue('venda_fac');
+  const produto    = interaction.fields.getTextInputValue('venda_produto');
+  const quantidade = interaction.fields.getTextInputValue('venda_quantidade');
+  const valor      = interaction.fields.getTextInputValue('venda_valor');
+  const parceria   = interaction.fields.getTextInputValue('venda_parceria');
 
   try {
     const canalLog  = await guild.channels.fetch(config.CANAL_VENDA_LOG);
     const timestamp = `<t:${Math.floor(Date.now() / 1000)}:f>`;
-    const semFoto   = !foto;
 
     const texto =
       `## 💰  Registro de Venda\n\n` +
       `**Vendedor:** ${member}  ·  \`${parsearNick(member)}\`\n\n` +
       `🏢 **Facção:** \`${fac}\`\n` +
       `📦 **Produto:** \`${produto}\`\n` +
+      `🔢 **Quantidade:** \`${quantidade}\`\n` +
       `🤝 **Parceria:** \`${parceria}\`\n` +
       `💵 **Valor:** \`${formatarValorBR(valor)}\`\n\n` +
-      (semFoto ? `📸 **Comprovante:** *Envie a foto abaixo desta mensagem.*\n\n` : '') +
+      `📸 **Comprovante:** *Envie a foto abaixo desta mensagem.*\n\n` +
       `-# Registrado em ${timestamp}`;
 
-    const container = new ContainerBuilder().setAccentColor(config.VENDA_COR ?? 0xFF0000);
-
-    if (foto) {
-      try {
-        container.addMediaGalleryComponents(
-          new MediaGalleryBuilder().addItems(
-            new MediaGalleryItemBuilder().setURL(foto),
-          ),
-        );
-      } catch {}
-    }
-
-    container.addTextDisplayComponents(new TextDisplayBuilder().setContent(texto));
+    const container = new ContainerBuilder()
+      .setAccentColor(config.VENDA_COR ?? 0xFF0000)
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(texto));
 
     const msg = await canalLog.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
     await interaction.editReply({
-      content: semFoto
-        ? `✅ Venda registrada! Envie o print do comprovante [aqui](${msg.url}).`
-        : '✅ Venda registrada!',
+      content: `✅ Venda registrada! Envie o print do comprovante [aqui](${msg.url}).`,
     });
   } catch (err) {
     console.error(`[${new Date().toISOString()}] Erro ao registrar venda:`, err);
