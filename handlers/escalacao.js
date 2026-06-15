@@ -56,6 +56,7 @@ const fs   = require('fs');
 const path = require('path');
 const config = require('../config');
 const { temPermissao } = require('../utils/permissao');
+const { formatarValorBR } = require('../utils/formato');
 const { atualizarRanking } = require('./ranking');
 
 const ARQUIVO = path.join(__dirname, '../data/escalacoes.json');
@@ -504,7 +505,7 @@ async function registrarResultado(interaction, escId, vitoria, valor) {
     : '`Nenhum`';
 
   const criadorLine = esc.criadorId ? `\n👤 Criado por <@${esc.criadorId}>` : '';
-  const valorLine   = valor ? `\n💰 **Valor:** ${valor}` : '';
+  const valorLine   = valor ? `\n💰 **Valor:** ${formatarValorBR(valor)}` : '';
 
   const text =
     `## ${vitoria ? '🏆  Vitória!' : '💀  Derrota'}\n` +

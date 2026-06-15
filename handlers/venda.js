@@ -15,6 +15,7 @@ const {
   MessageFlags,
 } = require('discord.js');
 const config = require('../config');
+const { formatarValorBR } = require('../utils/formato');
 
 function parsearNick(member) {
   const nick = member.nickname || member.user.username;
@@ -150,7 +151,7 @@ async function handleModalVenda(interaction) {
       `🏢 **Facção:** \`${fac}\`\n` +
       `📦 **Produto:** \`${produto}\`\n` +
       `🤝 **Parceria:** \`${parceria}\`\n` +
-      `💵 **Valor:** \`$${valor}\`\n\n` +
+      `💵 **Valor:** \`${formatarValorBR(valor)}\`\n\n` +
       (semFoto ? `📸 **Comprovante:** *Envie a foto abaixo desta mensagem.*\n\n` : '') +
       `-# Registrado por ${member}  ·  ${timestamp}`;
 

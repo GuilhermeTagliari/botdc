@@ -771,30 +771,38 @@ client.on('interactionCreate', async (interaction) => {
             'Use `/configurar` para configurar todos os aspectos do bot sem editar nenhum arquivo. Requer **Administrador**.\n\n' +
             '**📋 Seções disponíveis:**\n' +
             '`Recrutamento` — Canal de envio, canal de aprovação e cargo dado no aceite\n' +
-            '`Escalação` — Canal, cargo do comandante, ações predefinidas e rádio\n' +
+            '`Escalação` — Canais, cargos, rádio, categorias de ação e painel\n' +
             '`Farm` — Canal de farm, categoria de salas (normal e ADM)\n' +
             '`Ausência` — Canal de solicitação, de aprovação, de ausências ativas e cargo de ausente\n' +
             '`Vendas` — Canal de registro e categoria de logs de venda\n' +
             '`Armas` — Canal de solicitação e canal de log\n' +
             '`Codiguinho` — Canal de solicitação, canal de log e cargos admin\n' +
             '`Ticket` — Canal de abertura e categoria onde ficam os tickets\n' +
-            '`Ranking` — Canal onde o ranking é exibido\n' +
+            '`Ranking` — Canal do ranking · toggle **💰 Pedir Valor** ao registrar vitória\n' +
             '`Logs` — Canais de log: entrada, saída, atualização de cargo, voz e advertências\n' +
             '`Advertências` — Cargo atribuído por nível de warn (nível 1, 2, 3 e 4)\n' +
-            '`Setup` — Reenvia os painéis de cada módulo nos canais configurados\n\n' +
+            '`Setup` — Reenvia os painéis de cada módulo nos canais configurados\n' +
+            '`Aparência` — Nome e avatar do bot · imagem global e imagens por módulo\n\n' +
             '**✏️ Personalizar Painel** *(botão presente em cada módulo)*\n' +
             'Abre um modal com 5 campos:\n' +
             '> **Título** — Cabeçalho exibido no painel\n' +
             '> **Descrição** — Corpo do painel (suporta **negrito**, *itálico*, etc.)\n' +
             '> **Cor** — Hex sem `#` — ex: `3498DB` = azul · `FF0000` = vermelho · `57F287` = verde\n' +
             '> **Botão** — Texto do botão principal de interação\n' +
-            '> **Imagem** — URL do banner no topo (afeta todos os módulos ao mesmo tempo)\n\n' +
-            '**📋 Ações Predefinidas** *(Escalação)*\n' +
-            'Cadastre ações no formato `Nome:Quantidade` — ex: `Banco Central:11`, `Porto:10`\n' +
-            'Quando configuradas, substituem os 3 menus padrão por um único select com as ações cadastradas.\n\n' +
+            '> **Imagem** — URL do banner exclusivo deste módulo\n\n' +
+            '**📋 Categorias de Escalação** *(Escalação → 📋 Categorias)*\n' +
+            'Crie categorias (ex: Ação Grande, Ação Média) com emoji e adicione ações com nome e quantidade de vagas.\n' +
+            'Até **4 categorias** aparecem como menus separados no painel de escalação.\n' +
+            'Gerencie tudo pelo bot: criar categoria · adicionar/remover ações · excluir categoria.\n\n' +
             '**📻 Rádio** *(Escalação)*\n' +
             'Toggle que ativa um campo de frequência de rádio ao criar escalações.\n' +
             'Quando ativo, o card publicado exibe `📻 Rádio: [frequência informada]`.\n\n' +
+            '**💰 Pedir Valor** *(Ranking)*\n' +
+            'Quando ativo, ao clicar em 🏆 Vitória o bot pede o valor da ação antes de registrar.\n' +
+            'O valor aparece no card de resultado como `💰 Valor: R$ 50.000`.\n\n' +
+            '**🎨 Aparência do Bot**\n' +
+            '`✏️ Editar Bot` — Altera o nome e o avatar do bot no Discord (limite: 2x por hora para nome)\n' +
+            '`🖼️ Imagem Global` — Define a imagem padrão usada nos módulos sem imagem própria\n\n' +
             '**🔧 Setup → Enviar Mensagens**\n' +
             'Reenvia o painel do módulo no canal configurado. Use após personalizar, trocar o canal ou reiniciar o bot.\n\n' +
             '-# Never Pure  ·  Feito por zeca',
