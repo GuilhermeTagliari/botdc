@@ -94,7 +94,7 @@ const {
   handleModalLimparQtd,
 } = require('./handlers/codiguinho');
 const { handleArmasChannel, handleArmasBotao, handleModalArmas, handleArmasAprovar, handleArmasRecusar } = require('./handlers/armas');
-const { handleVendaChannel, handleVendaBotao, handleModalVenda, handleVendaAprovar, handleVendaRecusar } = require('./handlers/venda');
+const { handleVendaChannel, handleVendaBotao, handleModalVenda } = require('./handlers/venda');
 const { handleEntrarVoz, handleSairVoz, atualizarSessaoVoz } = require('./handlers/voz');
 const {
   handleConfigurar,
@@ -1006,10 +1006,6 @@ client.on('interactionCreate', async (interaction) => {
         await handleArmasRecusar(interaction, customId.slice('armas_recusar_'.length));
       } else if (customId === 'venda_criar') {
         await handleVendaBotao(interaction);
-      } else if (customId.startsWith('venda_aprovar_')) {
-        await handleVendaAprovar(interaction, customId.slice('venda_aprovar_'.length));
-      } else if (customId.startsWith('venda_recusar_')) {
-        await handleVendaRecusar(interaction, customId.slice('venda_recusar_'.length));
       } else if (customId === 'cfg_ranking_valor') {
         await handleConfigRankingValor(interaction);
       } else if (customId === 'cfg_esc_cats') {
