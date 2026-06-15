@@ -5,8 +5,6 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  ChannelType,
-  PermissionFlagsBits,
   ContainerBuilder,
   TextDisplayBuilder,
   SeparatorBuilder,
@@ -123,37 +121,26 @@ async function handleModalVenda(interaction) {
   await interaction.deferReply({ ephemeral: true });
 
   const { member, guild } = interaction;
-  const fac      = interaction.fields.getTextInputValue('venda_fac');
-  const produto  = interaction.fields.getTextInputValue('venda_produto');
+  const fac     = interaction.fields.getTextInputValue('venda_fac');
+  const produto = interaction.fields.getTextInputValue('venda_produto');
   const parceria = interaction.fields.getTextInputValue('venda_parceria');
-  const valor    = interaction.fields.getTextInputValue('venda_valor');
-  const foto     = interaction.fields.getTextInputValue('venda_foto').trim();
-  const nomeCanal = parsearNick(member);
-
-  const permissoes = [
-    { id: guild.id,                   deny:  [PermissionFlagsBits.ViewChannel] },
-    { id: interaction.client.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ManageChannels] },
-    { id: member.id,                  allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.ManageMessages] },
-  ];
-
-  const options = { name: `venda-${nomeCanal}`, type: ChannelType.GuildText, permissionOverwrites: permissoes };
-  if (config.CATEGORIA_VENDA) options.parent = config.CATEGORIA_VENDA;
+  const valor   = interaction.fields.getTextInputValue('venda_valor');
+  const foto    = interaction.fields.getTextInputValue('venda_foto').trim();
 
   try {
-    const canal = await guild.channels.create(options);
-
+    const canalLog = await guild.channels.fetch(config.CANAL_VENDA_LOG);
     const timestamp = `<t:${Math.floor(Date.now() / 1000)}:f>`;
     const semFoto   = !foto;
 
     const texto =
       `## 💰  Registro de Venda\n\n` +
-      `Olá ${member}! Sua venda foi registrada abaixo.\n\n` +
+      `**Vendedor:** ${member}  ·  \`${member.nickname || member.user.username}\`\n\n` +
       `🏢 **Facção:** \`${fac}\`\n` +
       `📦 **Produto:** \`${produto}\`\n` +
       `🤝 **Parceria:** \`${parceria}\`\n` +
       `💵 **Valor:** \`${formatarValorBR(valor)}\`\n\n` +
       (semFoto ? `📸 **Comprovante:** *Envie a foto abaixo desta mensagem.*\n\n` : '') +
-      `-# Registrado por ${member}  ·  ${timestamp}`;
+      `-# Registrado em ${timestamp}`;
 
     const container = new ContainerBuilder().setAccentColor(0xFEE75C);
 
@@ -177,11 +164,11 @@ async function handleModalVenda(interaction) {
         ),
       );
 
-    await canal.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
-    await interaction.editReply({ content: `✅ Venda registrada! ${canal}` });
+    await canalLog.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
+    await interaction.editReply({ content: '✅ Venda registrada! Aguarde a aprovação da staff.' });
   } catch (err) {
-    console.error(`[${new Date().toISOString()}] Erro ao criar canal de venda:`, err);
-    await interaction.editReply({ content: '❌ Erro ao criar o canal. Verifique se o bot tem permissão de **Gerenciar Canais**.' });
+    console.error(`[${new Date().toISOString()}] Erro ao registrar venda:`, err);
+    await interaction.editReply({ content: '❌ Erro ao registrar a venda. Verifique se o canal de log está configurado.' });
   }
 }
 

@@ -148,14 +148,14 @@ function buildSecao(secao) {
       embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
         `## 💰 Vendas\n\n` +
         `📺 **Canal Setup Venda:** ${ch(c.CANAL_VENDA_BTN)}\n` +
-        `📁 **Categoria Venda:** ${ch(c.CATEGORIA_VENDA)}\n\n` +
+        `📬 **Canal Log/Aprovação:** ${ch(c.CANAL_VENDA_LOG)}\n\n` +
         `**Painel:** ${c.VENDA_TITULO}  ·  🎨 #${(c.VENDA_COR ?? 0xFF0000).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
-          btn('cfg_ch_CANAL_VENDA_BTN',  '📺 Canal Setup',         ButtonStyle.Primary),
-          btn('cfg_ch_CATEGORIA_VENDA',  '📁 Categoria',           ButtonStyle.Primary),
-          btn('cfg_painel_venda',        '✏️ Personalizar Painel', ButtonStyle.Secondary),
+          btn('cfg_ch_CANAL_VENDA_BTN', '📺 Canal Setup',          ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_VENDA_LOG', '📬 Canal Log/Aprovação',  ButtonStyle.Primary),
+          btn('cfg_painel_venda',       '✏️ Personalizar Painel',  ButtonStyle.Secondary),
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],

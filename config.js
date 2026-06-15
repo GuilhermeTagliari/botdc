@@ -33,7 +33,7 @@ const config = {
   CANAL_AUSENCIA_ATIVA:     process.env.CANAL_AUSENCIA_ATIVA,
 
   CANAL_VENDA_BTN:       process.env.CANAL_VENDA_BTN,
-  CATEGORIA_VENDA:       process.env.CATEGORIA_VENDA,
+  CANAL_VENDA_LOG:       process.env.CANAL_VENDA_LOG,
 
   CANAL_ARMAS_BTN:       process.env.CANAL_ARMAS_BTN,
   CANAL_ARMAS_LOG:       process.env.CANAL_ARMAS_LOG,
