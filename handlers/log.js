@@ -282,13 +282,13 @@ function lerCallLog() {
   try { return JSON.parse(fs.readFileSync(ARQUIVO_VOZ, 'utf8')); } catch { return {}; }
 }
 
-function salvarRegistroVoz(guildId, userId, userName, channelName, joinedAt, durationMs) {
+function salvarRegistroVoz(guildId, userId, userName, channelId, channelName, joinedAt, durationMs) {
   const data = new Date(joinedAt);
   const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
   const log = lerCallLog();
   if (!log[guildId]) log[guildId] = {};
   if (!log[guildId][chave]) log[guildId][chave] = [];
-  log[guildId][chave].push({ userId, userName, channelName, joinedAt, duration: durationMs });
+  log[guildId][chave].push({ userId, userName, channelId, channelName, joinedAt, duration: durationMs });
   try { fs.writeFileSync(ARQUIVO_VOZ, JSON.stringify(log, null, 2)); } catch (err) {
     console.error(`[${new Date().toISOString()}] Erro ao salvar call log:`, err.message);
   }
@@ -309,7 +309,7 @@ async function handleVoiceStateUpdate(oldState, newState) {
         const duracao = Date.now() - sessao.joinedAt;
         salvarRegistroVoz(
           member.guild.id, member.id, member.displayName,
-          sessao.channelName, sessao.joinedAt, duracao,
+          sessao.channelId, sessao.channelName, sessao.joinedAt, duracao,
         );
       }
     }
@@ -324,7 +324,7 @@ async function handleVoiceStateUpdate(oldState, newState) {
       vozSessoes.delete(member.id);
       salvarRegistroVoz(
         member.guild.id, member.id, member.displayName,
-        sessao.channelName, sessao.joinedAt, duracao,
+        sessao.channelId, sessao.channelName, sessao.joinedAt, duracao,
       );
     }
   }

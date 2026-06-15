@@ -388,11 +388,11 @@ const LISTA_COMANDOS = [
       { name: 'sair-call',    description: 'Bot sai do canal de voz atual',                          defaultMemberPermissions: '8' },
       {
         name: 'relatorio-call',
-        description: 'Envia relatório de presença em call de um dia específico',
+        description: 'Relatório de presença em um canal de voz — filtra por dia e canal',
         defaultMemberPermissions: '8',
         options: [
-          { name: 'dia',   description: 'Data do relatório (ex: 15/06 ou 15/06/2026)', type: 3, required: true },
-          { name: 'canal', description: 'Canal onde o relatório será enviado',          type: 7, required: true },
+          { name: 'dia',   description: 'Data — formato DD/MM ou DD/MM/AAAA (ex: 15/06 ou 15/06/2026)', type: 3, required: true },
+          { name: 'canal', description: 'Canal de voz para consultar',                                    type: 7, required: true, channel_types: [2] },
         ],
       },
 ];
@@ -754,7 +754,7 @@ client.on('interactionCreate', async (interaction) => {
             '`/configurar` — Configura o bot (canais, cargos, ações, painel)\n' +
             '`/entrar-call <canal>` — Bot entra em um canal de voz\n' +
             '`/sair-call` — Bot sai do canal de voz atual\n' +
-            '`/relatorio-call <dia> <canal>` — Envia relatório de presença em call de um dia específico\n\n' +
+            '`/relatorio-call <dia> <canal-voz>` — Relatório de quem esteve em um canal de voz num dia específico\n\n' +
             '**🛡️ Moderação**\n' +
             '`/banir <usuário> <motivo>` — Bane um membro\n' +
             '`/kick <usuário> <motivo>` — Expulsa um membro\n' +
