@@ -16,6 +16,7 @@ const fs   = require('fs');
 const path = require('path');
 const config = require('../config');
 const { dmEmbed } = require('../utils/dm');
+const { temPermissao } = require('../utils/permissao');
 
 const ARQUIVO = path.join(__dirname, '../data/ausencias.json');
 
@@ -185,6 +186,10 @@ async function handleModalAusencia(interaction) {
 }
 
 async function handleAusenciaAprovar(interaction, userId, dias) {
+  if (!temPermissao(interaction.member, config.CARGOS_AUSENCIA_ADM)) {
+    await interaction.reply({ content: '❌ Você não tem permissão para aprovar ausências.', ephemeral: true });
+    return;
+  }
   await interaction.deferReply({ ephemeral: true });
 
   const texto  = extrairTexto(interaction.message);
@@ -233,6 +238,10 @@ async function handleAusenciaAprovar(interaction, userId, dias) {
 }
 
 async function handleAusenciaReprovar(interaction, userId) {
+  if (!temPermissao(interaction.member, config.CARGOS_AUSENCIA_ADM)) {
+    await interaction.reply({ content: '❌ Você não tem permissão para reprovar ausências.', ephemeral: true });
+    return;
+  }
   await interaction.deferReply({ ephemeral: true });
 
   const texto     = extrairTexto(interaction.message);

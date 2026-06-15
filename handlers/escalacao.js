@@ -284,6 +284,10 @@ function buildModal(nomePreenchido, qtyPreenchido) {
 }
 
 async function handleEscalacaoSelectAcao(interaction) {
+  if (!temPermissao(interaction.member, config.CARGOS_ESCALACAO)) {
+    await interaction.reply({ content: '❌ Você não tem cargo para criar escalações.', ephemeral: true });
+    return;
+  }
   const value       = interaction.values[0];
   const [nome, qty] = value.split('|');
   const quantidade  = parseInt(qty, 10);
@@ -327,6 +331,10 @@ async function handleEscalacaoSelectAcao(interaction) {
 }
 
 async function handleEscalacaoCustom(interaction) {
+  if (!temPermissao(interaction.member, config.CARGOS_ESCALACAO)) {
+    await interaction.reply({ content: '❌ Você não tem cargo para criar escalações.', ephemeral: true });
+    return;
+  }
   await interaction.showModal(buildModal(null, null));
 }
 

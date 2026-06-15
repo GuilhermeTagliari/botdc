@@ -209,7 +209,8 @@ function buildSecao(secao) {
         `📺 **Canal Setup:** ${ch(c.CANAL_AUSENCIA_BTN)}\n` +
         `📬 **Canal Aprovação:** ${ch(c.CANAL_AUSENCIA_APROVACAO)}\n` +
         `📋 **Canal Ativas:** ${ch(c.CANAL_AUSENCIA_ATIVA)}\n` +
-        `🏷️ **Cargo Ausência:** ${rl(c.CARGO_AUSENCIA)}\n\n` +
+        `🏷️ **Cargo Ausência:** ${rl(c.CARGO_AUSENCIA)}\n` +
+        `👑 **Cargos Aprovadores:** ${rls(c.CARGOS_AUSENCIA_ADM)}\n\n` +
         `**Painel:** ${c.AUSENCIA_TITULO}  ·  🎨 #${(c.AUSENCIA_COR ?? 0xFEE75C).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
@@ -219,8 +220,9 @@ function buildSecao(secao) {
           btn('cfg_ch_CANAL_AUSENCIA_ATIVA',     '📋 Canal Ativas',    ButtonStyle.Primary),
         ),
         new ActionRowBuilder().addComponents(
-          btn('cfg_role_CARGO_AUSENCIA', '🏷️ Cargo Ausência',       ButtonStyle.Primary),
-          btn('cfg_painel_ausencia',     '✏️ Personalizar Painel',  ButtonStyle.Secondary),
+          btn('cfg_role_CARGO_AUSENCIA',         '🏷️ Cargo Ausência',       ButtonStyle.Primary),
+          btn('cfg_roles_CARGOS_AUSENCIA_ADM',   '👑 Cargos Aprovadores',   ButtonStyle.Secondary),
+          btn('cfg_painel_ausencia',             '✏️ Personalizar Painel',  ButtonStyle.Secondary),
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],

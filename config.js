@@ -31,6 +31,7 @@ const config = {
   CANAL_AUSENCIA_BTN:       process.env.CANAL_AUSENCIA_BTN,
   CANAL_AUSENCIA_APROVACAO: process.env.CANAL_AUSENCIA_APROVACAO,
   CANAL_AUSENCIA_ATIVA:     process.env.CANAL_AUSENCIA_ATIVA,
+  CARGOS_AUSENCIA_ADM:      parseIds(process.env.CARGOS_AUSENCIA_ADM),
 
   CANAL_VENDA_BTN:       process.env.CANAL_VENDA_BTN,
   CANAL_VENDA_LOG:       process.env.CANAL_VENDA_LOG,
