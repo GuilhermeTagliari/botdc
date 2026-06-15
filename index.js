@@ -135,6 +135,8 @@ const {
   handleConfigEscCatAcaoAdd,
   handleModalConfigEscCatAcao,
   handleConfigEscCatAcaoRem,
+  handleConfigEscCatAcaoEdit,
+  handleModalConfigEscCatAcaoEdit,
   handleConfigBotEditar,
   handleModalConfigBotEditar,
   handleConfigBotImg,
@@ -882,6 +884,9 @@ client.on('interactionCreate', async (interaction) => {
         await handleModalConfigBotEditar(interaction);
       } else if (interaction.customId === 'modal_cfg_bot_img') {
         await handleModalConfigBotImg(interaction);
+      } else if (interaction.customId.startsWith('modal_cfg_esc_acao_edit_')) {
+        const parts = interaction.customId.slice('modal_cfg_esc_acao_edit_'.length).split('_');
+        await handleModalConfigEscCatAcaoEdit(interaction, parseInt(parts[0], 10), parseInt(parts[1], 10));
       } else if (interaction.customId.startsWith('modal_cfg_esc_cat_acao_')) {
         await handleModalConfigEscCatAcao(interaction, parseInt(interaction.customId.slice('modal_cfg_esc_cat_acao_'.length), 10));
       } else if (interaction.customId.startsWith('modal_cfg_lista_')) {
@@ -908,6 +913,8 @@ client.on('interactionCreate', async (interaction) => {
         await handleConfigEscCatSel(interaction);
       } else if (interaction.customId.startsWith('cfg_esc_cat_acao_rem_')) {
         await handleConfigEscCatAcaoRem(interaction, parseInt(interaction.customId.slice('cfg_esc_cat_acao_rem_'.length), 10));
+      } else if (interaction.customId.startsWith('cfg_esc_cat_acao_edit_')) {
+        await handleConfigEscCatAcaoEdit(interaction, parseInt(interaction.customId.slice('cfg_esc_cat_acao_edit_'.length), 10));
       }
       return;
     }

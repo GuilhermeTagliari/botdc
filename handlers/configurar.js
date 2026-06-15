@@ -837,14 +837,18 @@ function buildCatDetailView(catIdx) {
 
   const rows = [];
   if (acoes.length > 0) {
+    const opts = acoes.map((a, i) => ({ label: `${a.nome} — ${a.qty} vagas`, value: String(i) }));
+    rows.push(new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`cfg_esc_cat_acao_edit_${catIdx}`)
+        .setPlaceholder('✏️ Selecione uma ação para editar...')
+        .addOptions(opts),
+    ));
     rows.push(new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId(`cfg_esc_cat_acao_rem_${catIdx}`)
-        .setPlaceholder('Selecione uma ação para remover...')
-        .addOptions(acoes.map((a, i) => ({
-          label: `${a.nome} — ${a.qty} vagas`,
-          value: String(i),
-        }))),
+        .setPlaceholder('🗑️ Selecione uma ação para remover...')
+        .addOptions(opts),
     ));
   }
   rows.push(new ActionRowBuilder().addComponents(
@@ -915,6 +919,54 @@ async function handleConfigEscCatAcaoRem(interaction, catIdx) {
     cats[catIdx].acoes?.splice(acaoIdx, 1);
     config.salvarConfig({ CATEGORIAS_ESCALACAO: cats });
   }
+  const { embed, rows } = buildCatDetailView(catIdx);
+  await interaction.update({ embeds: [embed], components: rows });
+}
+
+async function handleConfigEscCatAcaoEdit(interaction, catIdx) {
+  const acaoIdx = parseInt(interaction.values[0], 10);
+  const cats    = config.CATEGORIAS_ESCALACAO ?? [];
+  const acao    = cats[catIdx]?.acoes?.[acaoIdx];
+  if (!acao) {
+    await interaction.reply({ content: '❌ Ação não encontrada.', ephemeral: true });
+    return;
+  }
+  const modal = new ModalBuilder()
+    .setCustomId(`modal_cfg_esc_acao_edit_${catIdx}_${acaoIdx}`)
+    .setTitle(`Editar: ${acao.nome}`);
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('acao_nome').setLabel('Nome da Ação').setStyle(TextInputStyle.Short)
+        .setMaxLength(50).setRequired(true).setValue(acao.nome),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('acao_qty').setLabel('Quantidade de vagas').setStyle(TextInputStyle.Short)
+        .setMaxLength(5).setRequired(true).setValue(String(acao.qty)),
+    ),
+  );
+  await interaction.showModal(modal);
+}
+
+async function handleModalConfigEscCatAcaoEdit(interaction, catIdx, acaoIdx) {
+  const nome = interaction.fields.getTextInputValue('acao_nome').trim();
+  const qty  = parseInt(interaction.fields.getTextInputValue('acao_qty').trim(), 10);
+
+  if (isNaN(qty) || qty < 1) {
+    await interaction.reply({ content: '❌ Quantidade inválida. Use um número maior que 0.', ephemeral: true });
+    return;
+  }
+
+  const cats = JSON.parse(JSON.stringify(config.CATEGORIAS_ESCALACAO ?? []));
+  if (!cats[catIdx]?.acoes?.[acaoIdx]) {
+    await interaction.reply({ content: '❌ Ação não encontrada.', ephemeral: true });
+    return;
+  }
+
+  cats[catIdx].acoes[acaoIdx] = { nome, qty };
+  config.salvarConfig({ CATEGORIAS_ESCALACAO: cats });
+
   const { embed, rows } = buildCatDetailView(catIdx);
   await interaction.update({ embeds: [embed], components: rows });
 }
@@ -1034,6 +1086,8 @@ module.exports = {
   handleConfigEscCatAcaoAdd,
   handleModalConfigEscCatAcao,
   handleConfigEscCatAcaoRem,
+  handleConfigEscCatAcaoEdit,
+  handleModalConfigEscCatAcaoEdit,
   handleConfigBotEditar,
   handleModalConfigBotEditar,
   handleConfigBotImg,
