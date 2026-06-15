@@ -6,6 +6,8 @@ const {
   ThumbnailBuilder,
   MessageFlags,
 } = require('discord.js');
+const fs   = require('fs');
+const path = require('path');
 const config = require('../config');
 
 const convitesCache = new Map();
@@ -274,51 +276,22 @@ async function handleAuditEntry(entry, guild) {
 
 // ─── Voz ────────────────────────────────────────────────────
 
-function formatarDuracao(ms) {
-  const s = Math.floor(ms / 1000);
-  const m = Math.floor(s / 60);
-  const h = Math.floor(m / 60);
-  if (h > 0) return `${h}h ${m % 60}m ${s % 60}s`;
-  if (m > 0) return `${m}m ${s % 60}s`;
-  return `${s}s`;
+const ARQUIVO_VOZ = path.join(__dirname, '../data/call_log.json');
+
+function lerCallLog() {
+  try { return JSON.parse(fs.readFileSync(ARQUIVO_VOZ, 'utf8')); } catch { return {}; }
 }
 
-async function logVozEntrada(member, nomeCanal) {
-  if (!config.CANAL_LOG_VOZ) return;
-  const container = new ContainerBuilder()
-    .setAccentColor(0x57F287)
-    .addSectionComponents(
-      new SectionBuilder()
-        .addTextDisplayComponents(
-          new TextDisplayBuilder().setContent(
-            `## 🎙️  Entrou na Call\n\n` +
-            `${member} entrou em **${nomeCanal}**\n\n` +
-            `👤 \`${member.user.tag}\`  ·  <t:${Math.floor(Date.now() / 1000)}:t>\n\n` +
-            `-# ID ${member.user.id}`,
-          ),
-        )
-        .setThumbnailAccessory(new ThumbnailBuilder().setURL(member.user.displayAvatarURL({ dynamic: true }))),
-    );
-  await enviarLog(member.guild, config.CANAL_LOG_VOZ, container);
-}
-
-async function logVozSaida(member, nomeCanal, duracaoMs) {
-  if (!config.CANAL_LOG_VOZ) return;
-  const container = new ContainerBuilder()
-    .setAccentColor(0x99AAB5)
-    .addSectionComponents(
-      new SectionBuilder()
-        .addTextDisplayComponents(
-          new TextDisplayBuilder().setContent(
-            `## 🔇  Saiu da Call\n\n` +
-            `${member} saiu de **${nomeCanal}**\n\n` +
-            `👤 \`${member.user.tag}\`  ·  ⏱️ **Tempo:** \`${formatarDuracao(duracaoMs)}\`\n\n` +
-            `-# ID ${member.user.id}`,
-          ),
-        )
-        .setThumbnailAccessory(new ThumbnailBuilder().setURL(member.user.displayAvatarURL({ dynamic: true }))),
-    );
-  await enviarLog(member.guild, config.CANAL_LOG_VOZ, container);
+function salvarRegistroVoz(guildId, userId, userName, channelName, joinedAt, durationMs) {
+  const data = new Date(joinedAt);
+  const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+  const log = lerCallLog();
+  if (!log[guildId]) log[guildId] = {};
+  if (!log[guildId][chave]) log[guildId][chave] = [];
+  log[guildId][chave].push({ userId, userName, channelName, joinedAt, duration: durationMs });
+  try { fs.writeFileSync(ARQUIVO_VOZ, JSON.stringify(log, null, 2)); } catch (err) {
+    console.error(`[${new Date().toISOString()}] Erro ao salvar call log:`, err.message);
+  }
 }
 
 async function handleVoiceStateUpdate(oldState, newState) {
@@ -334,12 +307,14 @@ async function handleVoiceStateUpdate(oldState, newState) {
       const sessao = vozSessoes.get(member.id);
       if (sessao) {
         const duracao = Date.now() - sessao.joinedAt;
-        await logVozSaida(member, sessao.channelName, duracao);
+        salvarRegistroVoz(
+          member.guild.id, member.id, member.displayName,
+          sessao.channelName, sessao.joinedAt, duracao,
+        );
       }
     }
     const canal = newState.channel;
     vozSessoes.set(member.id, { channelId: canal.id, channelName: canal.name, joinedAt: Date.now() });
-    await logVozEntrada(member, canal.name);
   }
 
   if (saiu) {
@@ -347,7 +322,10 @@ async function handleVoiceStateUpdate(oldState, newState) {
     if (sessao) {
       const duracao = Date.now() - sessao.joinedAt;
       vozSessoes.delete(member.id);
-      await logVozSaida(member, sessao.channelName, duracao);
+      salvarRegistroVoz(
+        member.guild.id, member.id, member.displayName,
+        sessao.channelName, sessao.joinedAt, duracao,
+      );
     }
   }
 }
@@ -360,4 +338,5 @@ module.exports = {
   handleInviteCreate,
   handleInviteDelete,
   handleVoiceStateUpdate,
+  lerCallLog,
 };

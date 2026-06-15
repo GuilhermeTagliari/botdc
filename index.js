@@ -96,6 +96,7 @@ const {
 const { handleArmasChannel, handleArmasBotao, handleModalArmas, handleArmasAprovar, handleArmasRecusar } = require('./handlers/armas');
 const { handleVendaChannel, handleVendaBotao, handleModalVenda } = require('./handlers/venda');
 const { handleEntrarVoz, handleSairVoz, atualizarSessaoVoz } = require('./handlers/voz');
+const { handleRelatorioChamada } = require('./handlers/relatorio_call');
 const {
   handleConfigurar,
   handleConfigBack,
@@ -385,6 +386,15 @@ const LISTA_COMANDOS = [
       { name: 'entrar-call',  description: 'Bot entra em um canal de voz',                           defaultMemberPermissions: '8',
         options: [{ name: 'canal', description: 'Canal de voz', type: 7, required: true, channel_types: [2] }] },
       { name: 'sair-call',    description: 'Bot sai do canal de voz atual',                          defaultMemberPermissions: '8' },
+      {
+        name: 'relatorio-call',
+        description: 'Envia relatório de presença em call de um dia específico',
+        defaultMemberPermissions: '8',
+        options: [
+          { name: 'dia',   description: 'Data do relatório (ex: 15/06 ou 15/06/2026)', type: 3, required: true },
+          { name: 'canal', description: 'Canal onde o relatório será enviado',          type: 7, required: true },
+        ],
+      },
 ];
 
 async function registrarComandos(client) {
@@ -712,10 +722,10 @@ client.on('interactionCreate', async (interaction) => {
       } else if (interaction.commandName === 'comandos') {
         await interaction.deferReply({ ephemeral: true });
         const { ContainerBuilder: CBcmd, TextDisplayBuilder: TDBcmd, SeparatorBuilder: SBcmd, MediaGalleryBuilder: MGBcmd, MediaGalleryItemBuilder: MGIBcmd, MessageFlags: MFcmd } = require('discord.js');
-        const imgCmds = 'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863';
+        const cfgCmd = require('./config');
         const containerCmds = new CBcmd()
           .setAccentColor(0x3498DB)
-          .addMediaGalleryComponents(new MGBcmd().addItems(new MGIBcmd().setURL(imgCmds)))
+          .addMediaGalleryComponents(new MGBcmd().addItems(new MGIBcmd().setURL(cfgCmd.IMG_PADRAO)))
           .addSeparatorComponents(new SBcmd().setDivider(true))
           .addTextDisplayComponents(new TDBcmd().setContent(
             '# COMANDOS — Never Pure BOT\nLista de todos os comandos disponíveis.\n\n' +
@@ -742,8 +752,9 @@ client.on('interactionCreate', async (interaction) => {
             '`/armas-setup` — Painel de solicitação de armas\n' +
             '`/venda-setup` — Painel de registro de vendas\n' +
             '`/configurar` — Configura o bot (canais, cargos, ações, painel)\n' +
-            '`/entrar-call <canal>` — Bot entra em um canal de voz e começa a registrar o tempo de cada membro\n' +
-            '`/sair-call` — Bot sai do canal e envia relatório de tempo por membro no canal de log\n\n' +
+            '`/entrar-call <canal>` — Bot entra em um canal de voz\n' +
+            '`/sair-call` — Bot sai do canal de voz atual\n' +
+            '`/relatorio-call <dia> <canal>` — Envia relatório de presença em call de um dia específico\n\n' +
             '**🛡️ Moderação**\n' +
             '`/banir <usuário> <motivo>` — Bane um membro\n' +
             '`/kick <usuário> <motivo>` — Expulsa um membro\n' +
@@ -828,6 +839,8 @@ client.on('interactionCreate', async (interaction) => {
         await handleEntrarVoz(interaction);
       } else if (interaction.commandName === 'sair-call') {
         await handleSairVoz(interaction);
+      } else if (interaction.commandName === 'relatorio-call') {
+        await handleRelatorioChamada(interaction);
       }
       return;
     }
