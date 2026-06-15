@@ -94,7 +94,7 @@ const {
 } = require('./handlers/codiguinho');
 const { handleArmasChannel, handleArmasBotao, handleModalArmas } = require('./handlers/armas');
 const { handleVendaChannel, handleVendaBotao, handleModalVenda } = require('./handlers/venda');
-const { handleEntrarVoz, handleSairVoz } = require('./handlers/voz');
+const { handleEntrarVoz, handleSairVoz, atualizarSessaoVoz } = require('./handlers/voz');
 const {
   handleConfigurar,
   handleConfigBack,
@@ -410,7 +410,10 @@ client.on('guildCreate', async (guild) => {
 
 client.on('inviteCreate', handleInviteCreate);
 client.on('inviteDelete', handleInviteDelete);
-client.on('voiceStateUpdate', handleVoiceStateUpdate);
+client.on('voiceStateUpdate', (oldState, newState) => {
+  handleVoiceStateUpdate(oldState, newState);
+  atualizarSessaoVoz(oldState, newState);
+});
 
 client.on('guildMemberAdd',          (member)         => logEntrada(member));
 client.on('guildMemberRemove',       (member)         => registrarSaida(member));
