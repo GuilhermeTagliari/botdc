@@ -156,10 +156,10 @@ async function handleModalVenda(interaction) {
 
     container.addTextDisplayComponents(new TextDisplayBuilder().setContent(texto));
 
-    await canalLog.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
+    const msg = await canalLog.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
     await interaction.editReply({
       content: semFoto
-        ? `✅ Venda registrada! Vá até ${canalLog} e envie o print do comprovante.`
+        ? `✅ Venda registrada! Envie o print do comprovante [aqui](${msg.url}).`
         : '✅ Venda registrada!',
     });
   } catch (err) {
