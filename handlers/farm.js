@@ -172,7 +172,7 @@ async function handleFarmChannel(client, guild) {
     const container = new ContainerBuilder()
       .setAccentColor(config.FARM_COR ?? 0x3498DB)
       .addMediaGalleryComponents(
-        new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO)),
+        new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(config.getImg('FARM'))),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addTextDisplayComponents(

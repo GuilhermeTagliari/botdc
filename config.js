@@ -72,10 +72,56 @@ const config = {
   CARGO_HIER_9:  process.env.CARGO_HIER_9,
   CARGO_HIER_10: process.env.CARGO_HIER_10,
 
-  ACOES_PREDEFINIDAS: [], // formato: "Nome da Ação:quantidade" por item
+  RANKING_PEDIR_VALOR: false, // pede o valor da ação ao registrar vitória
 
-  // ─── Imagem padrão ────────────────────────────────────────
-  IMG_PADRAO: 'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863&',
+  // ─── Categorias de escalação ──────────────────────────────────────────────
+  CATEGORIAS_ESCALACAO: [
+    { nome: 'Ação Grande', emoji: '🔴', acoes: [
+      { nome: 'Niobio',        qty: 15 },
+      { nome: 'Banco Central', qty: 11 },
+      { nome: 'Porto',         qty: 10 },
+      { nome: 'Galinheiro',    qty: 10 },
+      { nome: 'Banco Paleto',  qty: 8  },
+      { nome: 'Hotel Rosa',    qty: 8  },
+    ]},
+    { nome: 'Ação Média', emoji: '🟡', acoes: [
+      { nome: 'Flecca',                  qty: 8 },
+      { nome: 'Joia',                    qty: 8 },
+      { nome: 'Açougue',                 qty: 8 },
+      { nome: 'Teatro',                  qty: 8 },
+      { nome: 'Estacionamento (Marrom)', qty: 8 },
+      { nome: 'Bob Cat',                 qty: 8 },
+      { nome: 'Automar',                 qty: 8 },
+      { nome: 'Aeroporto Trevor',        qty: 6 },
+    ]},
+    { nome: 'Ação Pequena', emoji: '🟢', acoes: [
+      { nome: 'OBS',             qty: 10 },
+      { nome: 'Mergulhador',     qty: 8  },
+      { nome: 'Auditorio',       qty: 6  },
+      { nome: 'Campo de Golf',   qty: 5  },
+      { nome: 'Commedy',         qty: 5  },
+      { nome: 'Estabulo',        qty: 5  },
+      { nome: 'Plannet',         qty: 5  },
+      { nome: 'Navio Cargueiro', qty: 4  },
+      { nome: 'Yellow',          qty: 4  },
+      { nome: 'Lojinha',         qty: 4  },
+      { nome: 'Ammu',            qty: 3  },
+      { nome: 'Bebidas',         qty: 3  },
+      { nome: 'Fast Food',       qty: 3  },
+      { nome: 'Hyper Mercado',   qty: 3  },
+      { nome: 'Mc Donald',       qty: 3  },
+    ]},
+  ],
+
+  // ─── Imagens ──────────────────────────────────────────────
+  IMG_PADRAO:        'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863&',
+  RECRUTAMENTO_IMG:  null,
+  ESCALACAO_IMG:     null,
+  FARM_IMG:          null,
+  VENDA_IMG:         null,
+  ARMAS_IMG:         null,
+  AUSENCIA_IMG:      null,
+  TICKET_IMG:        null,
 
   // ─── Recrutamento ─────────────────────────────────────────
   RECRUTAMENTO_TITULO: 'RECRUTAMENTO',
@@ -144,3 +190,4 @@ carregarConfig();
 module.exports = config;
 module.exports.salvarConfig   = salvarConfig;
 module.exports.carregarConfig = carregarConfig;
+module.exports.getImg = (modulo) => config[`${modulo}_IMG`] || config.IMG_PADRAO;

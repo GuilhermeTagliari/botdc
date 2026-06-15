@@ -166,13 +166,13 @@ async function atualizarMensagem(guild, esc, escId) {
 }
 
 function buildSetupContainer() {
-  const acoesPred = (config.ACOES_PREDEFINIDAS ?? []).filter(Boolean);
+  const cats = (config.CATEGORIAS_ESCALACAO ?? []).filter((c) => c.acoes?.length > 0);
 
   const builder = new ContainerBuilder()
     .setAccentColor(config.ESCALACAO_COR ?? 0x3498DB)
     .addMediaGalleryComponents(
       new MediaGalleryBuilder().addItems(
-        new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO),
+        new MediaGalleryItemBuilder().setURL(config.getImg('ESCALACAO')),
       ),
     )
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
@@ -183,26 +183,19 @@ function buildSetupContainer() {
     )
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true));
 
-  if (acoesPred.length > 0) {
-    const opcoes = acoesPred.slice(0, 25).map((item) => {
-      const idx  = item.lastIndexOf(':');
-      const nome = idx >= 0 ? item.slice(0, idx).trim() : item.trim();
-      const qty  = idx >= 0 ? item.slice(idx + 1).trim() : '?';
-      return { label: `${nome} — ${qty} vagas`, value: `${nome}|${qty}` };
-    });
+  // Até 4 categorias (5ª linha reservada para Ação Personalizada)
+  for (const [idx, cat] of cats.slice(0, 4).entries()) {
     builder.addActionRowComponents(
       new ActionRowBuilder().addComponents(
         new StringSelectMenuBuilder()
-          .setCustomId('esc_select_predefinida')
-          .setPlaceholder('⚔️ Selecione a ação...')
-          .addOptions(opcoes),
+          .setCustomId(`esc_select_cat_${idx}`)
+          .setPlaceholder(`${cat.emoji ?? '⚔️'} ${cat.nome}`)
+          .addOptions(cat.acoes.slice(0, 25).map((a) => ({
+            label: `${a.nome} — ${a.qty} vagas`,
+            value: `${a.nome}|${a.qty}`,
+          }))),
       ),
     );
-  } else {
-    builder
-      .addActionRowComponents(makeSelectMenu('esc_select_grande',  '🔴 Ação Grande',  ACOES.grande))
-      .addActionRowComponents(makeSelectMenu('esc_select_media',   '🟡 Ação Média',   ACOES.media))
-      .addActionRowComponents(makeSelectMenu('esc_select_pequena', '🟢 Ação Pequena', ACOES.pequena));
   }
 
   builder.addActionRowComponents(
@@ -488,14 +481,7 @@ async function handleReabrir(interaction, escId) {
   await interaction.editReply({ content: '🔓 Escalação reaberta com sucesso!' });
 }
 
-async function handleResultado(interaction, escId, vitoria) {
-  await interaction.deferReply({ ephemeral: true });
-
-  if (!temPermissao(interaction.member, config.CARGOS_ESCALACAO)) {
-    await interaction.editReply({ content: '❌ Você não tem permissão para registrar o resultado.' });
-    return;
-  }
-
+async function registrarResultado(interaction, escId, vitoria, valor) {
   const esc = escalacoes.get(escId);
   if (!esc)          { await interaction.editReply({ content: '❌ Escalação não encontrada ou expirada.' }); return; }
   if (esc.resultado) { await interaction.editReply({ content: '⚠️ O resultado desta escalação já foi registrado.' }); return; }
@@ -518,11 +504,12 @@ async function handleResultado(interaction, escId, vitoria) {
     : '`Nenhum`';
 
   const criadorLine = esc.criadorId ? `\n👤 Criado por <@${esc.criadorId}>` : '';
+  const valorLine   = valor ? `\n💰 **Valor:** ${valor}` : '';
 
   const text =
     `## ${vitoria ? '🏆  Vitória!' : '💀  Derrota'}\n` +
     `${vitoria ? 'A ação foi concluída com sucesso!' : 'A ação não saiu como planejado.'}\n\n` +
-    `⚔️ **Ação:** ${esc.acao}  ·  👥 **${participantes.length} membros**\n\n` +
+    `⚔️ **Ação:** ${esc.acao}  ·  👥 **${participantes.length} membros**${valorLine}\n\n` +
     `**📋 Lista de Participantes:**\n${lista}\n\n` +
     `📝 Registrado por <@${interaction.user.id}>${criadorLine}  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
 
@@ -538,8 +525,46 @@ async function handleResultado(interaction, escId, vitoria) {
   }
 
   await interaction.editReply({ content: vitoria ? '🏆 Vitória registrada!' : '💀 Derrota registrada.' });
-
   await atualizarRanking(interaction.guild);
+}
+
+async function handleResultado(interaction, escId, vitoria) {
+  if (!temPermissao(interaction.member, config.CARGOS_ESCALACAO)) {
+    await interaction.reply({ content: '❌ Você não tem permissão para registrar o resultado.', ephemeral: true });
+    return;
+  }
+
+  const esc = escalacoes.get(escId);
+  if (!esc)          { await interaction.reply({ content: '❌ Escalação não encontrada ou expirada.', ephemeral: true }); return; }
+  if (esc.resultado) { await interaction.reply({ content: '⚠️ O resultado desta escalação já foi registrado.', ephemeral: true }); return; }
+
+  if (vitoria && config.RANKING_PEDIR_VALOR) {
+    const modal = new ModalBuilder()
+      .setCustomId(`modal_esc_valor_${escId}`)
+      .setTitle('Registrar Vitória');
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(
+        new TextInputBuilder()
+          .setCustomId('esc_valor')
+          .setLabel('Valor da ação (ex: R$ 50.000)')
+          .setStyle(TextInputStyle.Short)
+          .setMaxLength(60)
+          .setRequired(false)
+          .setPlaceholder('Ex: R$ 50.000  ·  Opcional'),
+      ),
+    );
+    await interaction.showModal(modal);
+    return;
+  }
+
+  await interaction.deferReply({ ephemeral: true });
+  await registrarResultado(interaction, escId, vitoria, null);
+}
+
+async function handleModalValorResultado(interaction, escId) {
+  await interaction.deferReply({ ephemeral: true });
+  const valor = interaction.fields.getTextInputValue('esc_valor').trim() || null;
+  await registrarResultado(interaction, escId, true, valor);
 }
 
 function extrairTexto(msg) {
@@ -717,6 +742,7 @@ module.exports = {
   handleFechar,
   handleReabrir,
   handleResultado,
+  handleModalValorResultado,
   restaurarEscalacoes,
   handleRepostarEscalacao,
 };

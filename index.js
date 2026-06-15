@@ -43,6 +43,7 @@ const {
   handleResultado,
   restaurarEscalacoes,
   handleRepostarEscalacao,
+  handleModalValorResultado,
 } = require('./handlers/escalacao');
 const {
   handleFarmChannel,
@@ -92,8 +93,8 @@ const {
   handleAdminLimparQtd:   handleCodLimparQtd,
   handleModalLimparQtd,
 } = require('./handlers/codiguinho');
-const { handleArmasChannel, handleArmasBotao, handleModalArmas } = require('./handlers/armas');
-const { handleVendaChannel, handleVendaBotao, handleModalVenda } = require('./handlers/venda');
+const { handleArmasChannel, handleArmasBotao, handleModalArmas, handleArmasAprovar, handleArmasRecusar } = require('./handlers/armas');
+const { handleVendaChannel, handleVendaBotao, handleModalVenda, handleVendaAprovar, handleVendaRecusar } = require('./handlers/venda');
 const { handleEntrarVoz, handleSairVoz, atualizarSessaoVoz } = require('./handlers/voz');
 const {
   handleConfigurar,
@@ -116,6 +117,19 @@ const {
   handleConfigPainelBtn,
   handleModalConfigPainel,
   handleConfigEscRadio,
+  handleConfigRankingValor,
+  handleConfigEscCats,
+  handleConfigEscCatAdd,
+  handleModalConfigEscCat,
+  handleConfigEscCatSel,
+  handleConfigEscCatDel,
+  handleConfigEscCatAcaoAdd,
+  handleModalConfigEscCatAcao,
+  handleConfigEscCatAcaoRem,
+  handleConfigBotEditar,
+  handleModalConfigBotEditar,
+  handleConfigBotImg,
+  handleModalConfigBotImg,
 } = require('./handlers/configurar');
 const {
   handleTicketChannel,
@@ -387,6 +401,8 @@ async function registrarComandos(client) {
 
 client.once('ready', async () => {
   console.log(`[${new Date().toISOString()}] Bot online: ${client.user.tag} — versão ${VERSAO}`);
+  const { salvarConfig } = require('./config');
+  salvarConfig({ BOT_NOME_DISPLAY: client.user.username });
   client.user.setPresence({
     activities: [{ name: 'Quer o bot no seu servidor? Entre em contato com o _zecaa.', type: 3 }],
     status: 'online',
@@ -694,6 +710,7 @@ client.on('interactionCreate', async (interaction) => {
         await handleAusenciaSetup(client, interaction.guild);
         await interaction.editReply({ content: '✅ Mensagem de ausência enviada!' });
       } else if (interaction.commandName === 'comandos') {
+        await interaction.deferReply();
         const { ContainerBuilder: CBcmd, TextDisplayBuilder: TDBcmd, SeparatorBuilder: SBcmd, MediaGalleryBuilder: MGBcmd, MediaGalleryItemBuilder: MGIBcmd, ButtonBuilder: BBcmd, ButtonStyle: BScmd, ActionRowBuilder: ARcmd, MessageFlags: MFcmd } = require('discord.js');
         const imgCmds = 'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863&';
         const containerCmds = new CBcmd()
@@ -725,17 +742,17 @@ client.on('interactionCreate', async (interaction) => {
             '`/armas-setup` — Painel de solicitação de armas\n' +
             '`/venda-setup` — Painel de registro de vendas\n' +
             '`/configurar` — Configura o bot (canais, cargos, ações, painel)\n' +
-            '`/entrar-call <canal>` — Bot entra em um canal de voz\n' +
-            '`/sair-call` — Bot sai do canal de voz\n\n' +
+            '`/entrar-call <canal>` — Bot entra em um canal de voz e começa a registrar o tempo de cada membro\n' +
+            '`/sair-call` — Bot sai do canal e envia relatório de tempo por membro no canal de log\n\n' +
             '**🛡️ Moderação**\n' +
             '`/banir <usuário> <motivo>` — Bane um membro\n' +
             '`/kick <usuário> <motivo>` — Expulsa um membro\n' +
             '`/mute <usuário> <tempo> <motivo>` — Silencia por X minutos\n' +
             '`/warn <usuário> <motivo> <tipo>` — Registra uma advertência (🟢 Verde / 🟡 Amarela / 🔴 Vermelha)\n' +
             '`/warns <usuário>` — Lista as advertências de um membro\n' +
-            '`/removewarn <usuário> <número>` — Remove uma advertência\n' +
-            '`/cargo <usuário> <cargo>` — Adiciona ou remove um cargo\n' +
-            '`/avisar <usuário> <mensagem>` — Envia DM para o membro\n' +
+            '`/removewarn <usuário> <número>` — Remove uma advertência específica\n' +
+            '`/cargo <usuário> <cargo>` — Adiciona ou remove um cargo de um membro\n' +
+            '`/avisar <usuário> <mensagem>` — Envia DM ao membro via bot\n' +
             '`/clear <quantidade>` — Apaga mensagens do canal\n' +
             '`/resetranking` — Reseta todos os dados do ranking\n\n' +
             '**🔧 Canal**\n' +
@@ -746,7 +763,40 @@ client.on('interactionCreate', async (interaction) => {
             '`/userinfo [usuário]` — Exibe informações de um membro\n' +
             '`/stats [usuário]` — Vitórias, derrotas e V/D de um membro\n' +
             '`/status` — Status e informações do bot\n' +
-            '`/comandos` — Exibe esta lista de comandos\n\n' +
+            '`/comandos` — Exibe esta lista de comandos',
+          ))
+          .addSeparatorComponents(new SBcmd().setDivider(true))
+          .addTextDisplayComponents(new TDBcmd().setContent(
+            '## ⚙️ Como funciona o /configurar\n\n' +
+            'Use `/configurar` para configurar todos os aspectos do bot sem editar nenhum arquivo. Requer **Administrador**.\n\n' +
+            '**📋 Seções disponíveis:**\n' +
+            '`Recrutamento` — Canal de envio, canal de aprovação e cargo dado no aceite\n' +
+            '`Escalação` — Canal, cargo do comandante, ações predefinidas e rádio\n' +
+            '`Farm` — Canal de farm, categoria de salas (normal e ADM)\n' +
+            '`Ausência` — Canal de solicitação, de aprovação, de ausências ativas e cargo de ausente\n' +
+            '`Vendas` — Canal de registro e categoria de logs de venda\n' +
+            '`Armas` — Canal de solicitação e canal de log\n' +
+            '`Codiguinho` — Canal de solicitação, canal de log e cargos admin\n' +
+            '`Ticket` — Canal de abertura e categoria onde ficam os tickets\n' +
+            '`Ranking` — Canal onde o ranking é exibido\n' +
+            '`Logs` — Canais de log: entrada, saída, atualização de cargo, voz e advertências\n' +
+            '`Advertências` — Cargo atribuído por nível de warn (nível 1, 2, 3 e 4)\n' +
+            '`Setup` — Reenvia os painéis de cada módulo nos canais configurados\n\n' +
+            '**✏️ Personalizar Painel** *(botão presente em cada módulo)*\n' +
+            'Abre um modal com 5 campos:\n' +
+            '> **Título** — Cabeçalho exibido no painel\n' +
+            '> **Descrição** — Corpo do painel (suporta **negrito**, *itálico*, etc.)\n' +
+            '> **Cor** — Hex sem `#` — ex: `3498DB` = azul · `FF0000` = vermelho · `57F287` = verde\n' +
+            '> **Botão** — Texto do botão principal de interação\n' +
+            '> **Imagem** — URL do banner no topo (afeta todos os módulos ao mesmo tempo)\n\n' +
+            '**📋 Ações Predefinidas** *(Escalação)*\n' +
+            'Cadastre ações no formato `Nome:Quantidade` — ex: `Banco Central:11`, `Porto:10`\n' +
+            'Quando configuradas, substituem os 3 menus padrão por um único select com as ações cadastradas.\n\n' +
+            '**📻 Rádio** *(Escalação)*\n' +
+            'Toggle que ativa um campo de frequência de rádio ao criar escalações.\n' +
+            'Quando ativo, o card publicado exibe `📻 Rádio: [frequência informada]`.\n\n' +
+            '**🔧 Setup → Enviar Mensagens**\n' +
+            'Reenvia o painel do módulo no canal configurado. Use após personalizar, trocar o canal ou reiniciar o bot.\n\n' +
             '-# Never Pure  ·  Feito por zeca',
           ))
           .addSeparatorComponents(new SBcmd().setDivider(true))
@@ -755,7 +805,7 @@ client.on('interactionCreate', async (interaction) => {
               new BBcmd().setLabel('💬 Falar com o Dev').setStyle(BScmd.Link).setURL('https://discord.com/users/1063952719838195812'),
             ),
           );
-        await interaction.reply({ components: [containerCmds], flags: MFcmd.IsComponentsV2 });
+        await interaction.editReply({ components: [containerCmds], flags: MFcmd.IsComponentsV2 });
       } else if (interaction.commandName === 'codiguinho-setup') {
         await interaction.deferReply({ ephemeral: true });
         await handleCodiguinhoChannel(client, interaction.guild);
@@ -801,7 +851,17 @@ client.on('interactionCreate', async (interaction) => {
       else if (interaction.customId === 'modal_cod_limpar_qtd')  await handleModalLimparQtd(interaction);
       else if (interaction.customId === 'modal_armas')           await handleModalArmas(interaction);
       else if (interaction.customId === 'modal_venda')           await handleModalVenda(interaction);
-      else if (interaction.customId.startsWith('modal_cfg_lista_')) {
+      else if (interaction.customId.startsWith('modal_esc_valor_')) {
+        await handleModalValorResultado(interaction, interaction.customId.slice('modal_esc_valor_'.length));
+      } else if (interaction.customId === 'modal_cfg_esc_cat') {
+        await handleModalConfigEscCat(interaction);
+      } else if (interaction.customId === 'modal_cfg_bot_editar') {
+        await handleModalConfigBotEditar(interaction);
+      } else if (interaction.customId === 'modal_cfg_bot_img') {
+        await handleModalConfigBotImg(interaction);
+      } else if (interaction.customId.startsWith('modal_cfg_esc_cat_acao_')) {
+        await handleModalConfigEscCatAcao(interaction, parseInt(interaction.customId.slice('modal_cfg_esc_cat_acao_'.length), 10));
+      } else if (interaction.customId.startsWith('modal_cfg_lista_')) {
         await handleModalConfigLista(interaction, interaction.customId.slice('modal_cfg_lista_'.length));
       } else if (interaction.customId.startsWith('modal_cfg_painel_')) {
         await handleModalConfigPainel(interaction, interaction.customId.slice('modal_cfg_painel_'.length));
@@ -819,6 +879,10 @@ client.on('interactionCreate', async (interaction) => {
         await handleConfigMenu(interaction);
       } else if (interaction.customId.startsWith('cfg_lista_rm_')) {
         await handleConfigListaRm(interaction, interaction.customId.slice('cfg_lista_rm_'.length));
+      } else if (interaction.customId === 'cfg_esc_cat_sel') {
+        await handleConfigEscCatSel(interaction);
+      } else if (interaction.customId.startsWith('cfg_esc_cat_acao_rem_')) {
+        await handleConfigEscCatAcaoRem(interaction, parseInt(interaction.customId.slice('cfg_esc_cat_acao_rem_'.length), 10));
       }
       return;
     }
@@ -928,8 +992,32 @@ client.on('interactionCreate', async (interaction) => {
         await handleCodLimparQtd(interaction);
       } else if (customId === 'armas_solicitar') {
         await handleArmasBotao(interaction);
+      } else if (customId.startsWith('armas_aprovar_')) {
+        await handleArmasAprovar(interaction, customId.slice('armas_aprovar_'.length));
+      } else if (customId.startsWith('armas_recusar_')) {
+        await handleArmasRecusar(interaction, customId.slice('armas_recusar_'.length));
       } else if (customId === 'venda_criar') {
         await handleVendaBotao(interaction);
+      } else if (customId.startsWith('venda_aprovar_')) {
+        await handleVendaAprovar(interaction, customId.slice('venda_aprovar_'.length));
+      } else if (customId.startsWith('venda_recusar_')) {
+        await handleVendaRecusar(interaction, customId.slice('venda_recusar_'.length));
+      } else if (customId === 'cfg_ranking_valor') {
+        await handleConfigRankingValor(interaction);
+      } else if (customId === 'cfg_esc_cats') {
+        await handleConfigEscCats(interaction);
+      } else if (customId === 'cfg_esc_cat_add') {
+        await handleConfigEscCatAdd(interaction);
+      } else if (customId === 'cfg_esc_cats_back') {
+        await handleConfigMenu(interaction, 'escalacao');
+      } else if (customId.startsWith('cfg_esc_cat_del_')) {
+        await handleConfigEscCatDel(interaction, parseInt(customId.slice('cfg_esc_cat_del_'.length), 10));
+      } else if (customId.startsWith('cfg_esc_cat_acao_add_')) {
+        await handleConfigEscCatAcaoAdd(interaction, parseInt(customId.slice('cfg_esc_cat_acao_add_'.length), 10));
+      } else if (customId === 'cfg_bot_editar') {
+        await handleConfigBotEditar(interaction);
+      } else if (customId === 'cfg_bot_img') {
+        await handleConfigBotImg(interaction);
       } else if (customId === 'cfg_back') {
         await handleConfigBack(interaction);
       } else if (customId === 'cfg_escradio') {

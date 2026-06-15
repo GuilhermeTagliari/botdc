@@ -150,7 +150,7 @@ async function handleTicketChannel(client, guild) {
       .setAccentColor(config.TICKET_COR ?? 0x3498DB)
       .addMediaGalleryComponents(
         new MediaGalleryBuilder().addItems(
-          new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO),
+          new MediaGalleryItemBuilder().setURL(config.getImg('TICKET')),
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))

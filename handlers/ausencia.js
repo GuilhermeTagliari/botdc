@@ -95,7 +95,7 @@ async function handleAusenciaSetup(client, guild) {
 
     const container = new ContainerBuilder()
       .setAccentColor(config.AUSENCIA_COR ?? 0x3498DB)
-      .addMediaGalleryComponents(new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO)))
+      .addMediaGalleryComponents(new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(config.getImg('AUSENCIA'))))
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(
         `# ${config.AUSENCIA_TITULO}\n\n${config.AUSENCIA_DESC}`,

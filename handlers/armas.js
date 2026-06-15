@@ -33,7 +33,7 @@ async function handleArmasChannel(client, guild) {
       .setAccentColor(config.ARMAS_COR ?? 0xFF0000)
       .addMediaGalleryComponents(
         new MediaGalleryBuilder().addItems(
-          new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO),
+          new MediaGalleryItemBuilder().setURL(config.getImg('ARMAS')),
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
@@ -104,6 +104,13 @@ async function handleModalArmas(interaction) {
           `🔶 **Munição:** \`${muni} balas\`\n\n` +
           `-# Solicitado em ${timestamp}`,
         ),
+      )
+      .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+      .addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId(`armas_aprovar_${member.id}`).setLabel('✅ Aprovar').setStyle(ButtonStyle.Success),
+          new ButtonBuilder().setCustomId(`armas_recusar_${member.id}`).setLabel('❌ Recusar').setStyle(ButtonStyle.Danger),
+        ),
       );
 
     await canalLog.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
@@ -114,4 +121,48 @@ async function handleModalArmas(interaction) {
   }
 }
 
-module.exports = { handleArmasChannel, handleArmasBotao, handleModalArmas };
+function extrairTexto(msg) {
+  const getText = (comp) => {
+    if (!comp) return '';
+    const type    = comp.type    ?? comp.data?.type;
+    const content = comp.content ?? comp.data?.content;
+    if (type === 10) return typeof content === 'string' ? content : '';
+    const children = comp.components ?? comp.data?.components ?? [];
+    return Array.isArray(children) ? children.map(getText).join('\n') : '';
+  };
+  return msg.components.map(getText).filter(Boolean).join('\n');
+}
+
+async function handleArmasAprovar(interaction, userId) {
+  await interaction.deferUpdate();
+  const texto = extrairTexto(interaction.message);
+  const container = new ContainerBuilder()
+    .setAccentColor(0x57F287)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`${texto}\n\n✅ **Aprovado por** <@${interaction.user.id}>`),
+    );
+  await interaction.message.edit({ components: [container], flags: MessageFlags.IsComponentsV2 });
+
+  try {
+    const membro = await interaction.guild.members.fetch(userId);
+    await membro.send(`✅ Sua solicitação de armas foi **aprovada** no servidor **${interaction.guild.name}**!`);
+  } catch {}
+}
+
+async function handleArmasRecusar(interaction, userId) {
+  await interaction.deferUpdate();
+  const texto = extrairTexto(interaction.message);
+  const container = new ContainerBuilder()
+    .setAccentColor(0xED4245)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`${texto}\n\n❌ **Recusado por** <@${interaction.user.id}>`),
+    );
+  await interaction.message.edit({ components: [container], flags: MessageFlags.IsComponentsV2 });
+
+  try {
+    const membro = await interaction.guild.members.fetch(userId);
+    await membro.send(`❌ Sua solicitação de armas foi **recusada** no servidor **${interaction.guild.name}**.`);
+  } catch {}
+}
+
+module.exports = { handleArmasChannel, handleArmasBotao, handleModalArmas, handleArmasAprovar, handleArmasRecusar };

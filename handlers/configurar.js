@@ -26,6 +26,7 @@ const SECOES = [
   { value: 'logs',         label: 'Logs',                      emoji: '📝', description: 'Canais de log' },
   { value: 'advertencias', label: 'Advertências',              emoji: '⚠️', description: 'Cargos por nível de warn' },
   { value: 'setup',        label: 'Setup — Enviar Mensagens',  emoji: '🔧', description: 'Envia mensagens nos canais configurados' },
+  { value: 'aparencia',   label: 'Aparência do Bot',          emoji: '🎨', description: 'Nome, avatar e imagem global padrão' },
 ];
 
 function menuEmbed() {
@@ -55,8 +56,8 @@ async function handleConfigBack(interaction) {
   await interaction.update({ embeds: [menuEmbed()], components: menuComponents() });
 }
 
-async function handleConfigMenu(interaction) {
-  const secao = interaction.values[0];
+async function handleConfigMenu(interaction, secaoOverride) {
+  const secao = secaoOverride ?? interaction.values[0];
   const { embed, rows } = buildSecao(secao);
   await interaction.update({ embeds: [embed], components: rows });
 }
@@ -99,7 +100,7 @@ function buildSecao(secao) {
         `🗂️ **Canal Controle:** ${ch(c.CANAL_CONTROLE)}\n` +
         `👥 **Cargos:** ${rls(c.CARGOS_ESCALACAO)}\n` +
         `📻 **Rádio na escalação:** ${c.ESCALACAO_RADIO ? '✅ Ativado' : '❌ Desativado'}\n` +
-        `📋 **Ações Predefinidas:** ${(c.ACOES_PREDEFINIDAS ?? []).length} configurada(s)\n\n` +
+        `📋 **Categorias:** ${(c.CATEGORIAS_ESCALACAO ?? []).length} configurada(s)\n\n` +
         `**Painel:** ${c.ESCALACAO_TITULO}  ·  🎨 #${(c.ESCALACAO_COR ?? 0x3498DB).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
@@ -109,9 +110,9 @@ function buildSecao(secao) {
           btn('cfg_ch_CANAL_CONTROLE',        '🗂️ Canal Controle',   ButtonStyle.Primary),
         ),
         new ActionRowBuilder().addComponents(
-          btn('cfg_roles_CARGOS_ESCALACAO',  '👥 Cargos',             ButtonStyle.Secondary),
-          btn('cfg_lista_ACOES_PREDEFINIDAS','📋 Ações Predefinidas',  ButtonStyle.Secondary),
-          btn('cfg_escradio',                c.ESCALACAO_RADIO ? '📻 Rádio: ✅' : '📻 Rádio: ❌', ButtonStyle.Secondary),
+          btn('cfg_roles_CARGOS_ESCALACAO', '👥 Cargos',    ButtonStyle.Secondary),
+          btn('cfg_escradio', c.ESCALACAO_RADIO ? '📻 Rádio: ✅' : '📻 Rádio: ❌', ButtonStyle.Secondary),
+          btn('cfg_esc_cats', '📋 Categorias',              ButtonStyle.Secondary),
         ),
         new ActionRowBuilder().addComponents(
           btn('cfg_painel_escalacao', '✏️ Personalizar Painel', ButtonStyle.Secondary),
@@ -241,11 +242,13 @@ function buildSecao(secao) {
     case 'ranking': return {
       embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
         `## 📊 Ranking\n\n` +
-        `📺 **Canal Ranking:** ${ch(c.CANAL_RANKING)}`,
+        `📺 **Canal Ranking:** ${ch(c.CANAL_RANKING)}\n` +
+        `💰 **Pedir Valor na Vitória:** ${c.RANKING_PEDIR_VALOR ? '✅ Ativo' : '❌ Inativo'}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
           btn('cfg_ch_CANAL_RANKING', '📺 Canal Ranking', ButtonStyle.Primary),
+          btn('cfg_ranking_valor', c.RANKING_PEDIR_VALOR ? '💰 Pedir Valor: ✅' : '💰 Pedir Valor: ❌', ButtonStyle.Secondary),
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],
@@ -314,6 +317,24 @@ function buildSecao(secao) {
           btn('cfg_setup_codiguinho', '🎟️ Codiguinho', ButtonStyle.Success),
         ),
         new ActionRowBuilder().addComponents(btn('cfg_back', '← Menu', ButtonStyle.Danger)),
+      ],
+    };
+
+    case 'aparencia': return {
+      embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
+        `## 🎨 Aparência do Bot\n\n` +
+        `🤖 **Nome atual do bot:** \`${c.BOT_NOME_DISPLAY ?? 'carregando...'}\`\n` +
+        `🖼️ **Imagem global padrão:** ${c.IMG_PADRAO ? '[ver link](' + c.IMG_PADRAO + ')' : '`não configurado`'}\n\n` +
+        `> Use **✏️ Editar Bot** para mudar o nome e o avatar do bot no Discord.\n` +
+        `> Use **🖼️ Imagem Global** para alterar a imagem usada como fallback em todos os módulos.\n` +
+        `> Para imagens por módulo use **Personalizar Painel** dentro de cada seção.`,
+      ),
+      rows: [
+        new ActionRowBuilder().addComponents(
+          btn('cfg_bot_editar',   '✏️ Editar Bot',     ButtonStyle.Primary),
+          btn('cfg_bot_img',      '🖼️ Imagem Global',  ButtonStyle.Secondary),
+          btn('cfg_back', '← Menu', ButtonStyle.Danger),
+        ),
       ],
     };
 
@@ -558,21 +579,21 @@ async function handleConfigListaClr(interaction, field) {
 
 // ─── Personalizar painel (título, desc, cor, botão, imagem) ───────────────────
 const PAINEL_KEYS = {
-  recrutamento: { titulo: 'RECRUTAMENTO_TITULO', desc: 'RECRUTAMENTO_DESC', cor: 'RECRUTAMENTO_COR', btnKey: 'RECRUTAMENTO_BTN' },
-  escalacao:    { titulo: 'ESCALACAO_TITULO',    desc: 'ESCALACAO_DESC',    cor: 'ESCALACAO_COR',    btnKey: null },
-  farm:         { titulo: 'FARM_TITULO',         desc: 'FARM_DESC',         cor: 'FARM_COR',         btnKey: 'FARM_BTN' },
-  venda:        { titulo: 'VENDA_TITULO',        desc: 'VENDA_DESC',        cor: 'VENDA_COR',        btnKey: 'VENDA_BTN' },
-  armas:        { titulo: 'ARMAS_TITULO',        desc: 'ARMAS_DESC',        cor: 'ARMAS_COR',        btnKey: 'ARMAS_BTN' },
-  codiguinho:   { titulo: 'CODIGUINHO_TITULO',   desc: 'CODIGUINHO_DESC',   cor: 'CODIGUINHO_COR',   btnKey: 'CODIGUINHO_BTN' },
-  ticket:       { titulo: 'TICKET_TITULO',       desc: 'TICKET_DESC',       cor: 'TICKET_COR',       btnKey: null },
-  ausencia:     { titulo: 'AUSENCIA_TITULO',     desc: 'AUSENCIA_DESC',     cor: 'AUSENCIA_COR',     btnKey: 'AUSENCIA_BTN' },
+  recrutamento: { titulo: 'RECRUTAMENTO_TITULO', desc: 'RECRUTAMENTO_DESC', cor: 'RECRUTAMENTO_COR', btnKey: 'RECRUTAMENTO_BTN', imgKey: 'RECRUTAMENTO_IMG' },
+  escalacao:    { titulo: 'ESCALACAO_TITULO',    desc: 'ESCALACAO_DESC',    cor: 'ESCALACAO_COR',    btnKey: null,               imgKey: 'ESCALACAO_IMG' },
+  farm:         { titulo: 'FARM_TITULO',         desc: 'FARM_DESC',         cor: 'FARM_COR',         btnKey: 'FARM_BTN',         imgKey: 'FARM_IMG' },
+  venda:        { titulo: 'VENDA_TITULO',        desc: 'VENDA_DESC',        cor: 'VENDA_COR',        btnKey: 'VENDA_BTN',        imgKey: 'VENDA_IMG' },
+  armas:        { titulo: 'ARMAS_TITULO',        desc: 'ARMAS_DESC',        cor: 'ARMAS_COR',        btnKey: 'ARMAS_BTN',        imgKey: 'ARMAS_IMG' },
+  codiguinho:   { titulo: 'CODIGUINHO_TITULO',   desc: 'CODIGUINHO_DESC',   cor: 'CODIGUINHO_COR',   btnKey: 'CODIGUINHO_BTN',   imgKey: null },
+  ticket:       { titulo: 'TICKET_TITULO',       desc: 'TICKET_DESC',       cor: 'TICKET_COR',       btnKey: null,               imgKey: 'TICKET_IMG' },
+  ausencia:     { titulo: 'AUSENCIA_TITULO',     desc: 'AUSENCIA_DESC',     cor: 'AUSENCIA_COR',     btnKey: 'AUSENCIA_BTN',     imgKey: 'AUSENCIA_IMG' },
 };
 
 async function handleConfigPainelBtn(interaction, modulo) {
   const keys = PAINEL_KEYS[modulo];
   if (!keys) { await interaction.reply({ content: '❌ Módulo não suporta personalização.', ephemeral: true }); return; }
 
-  const corNum = config[keys.cor] ?? 0;
+  const corNum = (Number(config[keys.cor] ?? 0) & 0xFFFFFF);
   const corHex = corNum.toString(16).padStart(6, '0').toUpperCase();
 
   const modal = new ModalBuilder()
@@ -619,8 +640,8 @@ async function handleConfigPainelBtn(interaction, modulo) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('painel_img')
-        .setLabel('URL da imagem padrão (deixe em branco p/ manter)')
-        .setValue(String(config.IMG_PADRAO ?? ''))
+        .setLabel('URL da imagem do painel (deixe em branco p/ manter)')
+        .setValue(keys.imgKey ? String(config[keys.imgKey] ?? config.IMG_PADRAO ?? '') : String(config.IMG_PADRAO ?? ''))
         .setStyle(TextInputStyle.Short)
         .setMaxLength(500)
         .setRequired(false),
@@ -653,7 +674,7 @@ async function handleModalConfigPainel(interaction, modulo) {
   }
 
   if (imgUrl && imgUrl.startsWith('http')) {
-    updates['IMG_PADRAO'] = imgUrl;
+    updates[keys.imgKey ?? 'IMG_PADRAO'] = imgUrl;
   }
 
   config.salvarConfig(updates);
@@ -705,6 +726,267 @@ async function handleConfigSetup(interaction, modulo, client) {
   }
 }
 
+// ─── Toggle pedir valor na vitória ────────────────────────────────────────────
+async function handleConfigRankingValor(interaction) {
+  const novo = !config.RANKING_PEDIR_VALOR;
+  config.salvarConfig({ RANKING_PEDIR_VALOR: novo });
+  await interaction.update({
+    embeds: [new EmbedBuilder().setColor(0x57F287).setDescription(
+      `✅ Pedir valor ao registrar vitória: **${novo ? '✅ Ativado' : '❌ Desativado'}**\n\n` +
+      `-# Quando ativado, ao clicar em "🏆 Vitória" será pedido o valor da ação antes de registrar.`,
+    )],
+    components: [new ActionRowBuilder().addComponents(btn('cfg_back', '← Menu', ButtonStyle.Secondary))],
+  });
+}
+
+// ─── Gerenciar categorias de escalação ────────────────────────────────────────
+
+function buildCatsView() {
+  const cats = config.CATEGORIAS_ESCALACAO ?? [];
+  const linhas = cats.length > 0
+    ? cats.map((c, i) => `\`${i + 1}.\` ${c.emoji ?? '⚔️'} **${c.nome}** — ${c.acoes?.length ?? 0} ação(ões)`).join('\n')
+    : '*Nenhuma categoria. Clique em ➕ Nova Categoria para adicionar.*';
+
+  const embed = new EmbedBuilder().setColor(0x5865F2).setDescription(
+    `## 📋 Categorias de Escalação\n\n${linhas}`,
+  );
+
+  const rows = [];
+  if (cats.length > 0) {
+    rows.push(new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('cfg_esc_cat_sel')
+        .setPlaceholder('Selecione uma categoria para gerenciar...')
+        .addOptions(cats.map((c, i) => ({
+          label: `${c.emoji ?? '⚔️'} ${c.nome}`,
+          description: `${c.acoes?.length ?? 0} ação(ões) cadastrada(s)`,
+          value: String(i),
+        }))),
+    ));
+  }
+  rows.push(new ActionRowBuilder().addComponents(
+    btn('cfg_esc_cat_add',  '➕ Nova Categoria', ButtonStyle.Success),
+    btn('cfg_esc_cats_back', '← Escalação',      ButtonStyle.Danger),
+  ));
+
+  return { embed, rows };
+}
+
+async function handleConfigEscCats(interaction) {
+  const { embed, rows } = buildCatsView();
+  await interaction.update({ embeds: [embed], components: rows });
+}
+
+async function handleConfigEscCatAdd(interaction) {
+  const modal = new ModalBuilder().setCustomId('modal_cfg_esc_cat').setTitle('Nova Categoria');
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('cat_nome').setLabel('Nome da Categoria').setStyle(TextInputStyle.Short)
+        .setMaxLength(40).setRequired(true).setPlaceholder('Ex: Ação Grande'),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('cat_emoji').setLabel('Emoji (opcional)').setStyle(TextInputStyle.Short)
+        .setMaxLength(8).setRequired(false).setPlaceholder('Ex: 🔴'),
+    ),
+  );
+  await interaction.showModal(modal);
+}
+
+async function handleModalConfigEscCat(interaction) {
+  const nome  = interaction.fields.getTextInputValue('cat_nome').trim();
+  const emoji = interaction.fields.getTextInputValue('cat_emoji').trim() || '⚔️';
+  const cats  = [...(config.CATEGORIAS_ESCALACAO ?? [])];
+  cats.push({ nome, emoji, acoes: [] });
+  config.salvarConfig({ CATEGORIAS_ESCALACAO: cats });
+  const { embed, rows } = buildCatsView();
+  await interaction.update({ embeds: [embed], components: rows });
+}
+
+function buildCatDetailView(catIdx) {
+  const cats = config.CATEGORIAS_ESCALACAO ?? [];
+  const cat  = cats[catIdx];
+  if (!cat) return buildCatsView();
+
+  const acoes  = cat.acoes ?? [];
+  const linhas = acoes.length > 0
+    ? acoes.map((a, i) => `\`${i + 1}.\` **${a.nome}** — ${a.qty} vagas`).join('\n')
+    : '*Nenhuma ação ainda. Clique em ➕ Nova Ação para adicionar.*';
+
+  const embed = new EmbedBuilder().setColor(0x5865F2).setDescription(
+    `## ${cat.emoji ?? '⚔️'} ${cat.nome}\n\n${linhas}`,
+  );
+
+  const rows = [];
+  if (acoes.length > 0) {
+    rows.push(new ActionRowBuilder().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId(`cfg_esc_cat_acao_rem_${catIdx}`)
+        .setPlaceholder('Selecione uma ação para remover...')
+        .addOptions(acoes.map((a, i) => ({
+          label: `${a.nome} — ${a.qty} vagas`,
+          value: String(i),
+        }))),
+    ));
+  }
+  rows.push(new ActionRowBuilder().addComponents(
+    btn(`cfg_esc_cat_acao_add_${catIdx}`, '➕ Nova Ação',          ButtonStyle.Success),
+    btn(`cfg_esc_cat_del_${catIdx}`,      '🗑️ Deletar Categoria',  ButtonStyle.Danger),
+    btn('cfg_esc_cats',                   '← Categorias',           ButtonStyle.Secondary),
+  ));
+
+  return { embed, rows };
+}
+
+async function handleConfigEscCatSel(interaction) {
+  const catIdx = parseInt(interaction.values[0], 10);
+  const { embed, rows } = buildCatDetailView(catIdx);
+  await interaction.update({ embeds: [embed], components: rows });
+}
+
+async function handleConfigEscCatDel(interaction, catIdx) {
+  const cats = [...(config.CATEGORIAS_ESCALACAO ?? [])];
+  cats.splice(catIdx, 1);
+  config.salvarConfig({ CATEGORIAS_ESCALACAO: cats });
+  const { embed, rows } = buildCatsView();
+  await interaction.update({ embeds: [embed], components: rows });
+}
+
+async function handleConfigEscCatAcaoAdd(interaction, catIdx) {
+  const modal = new ModalBuilder()
+    .setCustomId(`modal_cfg_esc_cat_acao_${catIdx}`)
+    .setTitle('Nova Ação');
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('acao_nome').setLabel('Nome da Ação').setStyle(TextInputStyle.Short)
+        .setMaxLength(50).setRequired(true).setPlaceholder('Ex: Banco Central'),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('acao_qty').setLabel('Quantidade de vagas').setStyle(TextInputStyle.Short)
+        .setMaxLength(5).setRequired(true).setPlaceholder('Ex: 11'),
+    ),
+  );
+  await interaction.showModal(modal);
+}
+
+async function handleModalConfigEscCatAcao(interaction, catIdx) {
+  const nome   = interaction.fields.getTextInputValue('acao_nome').trim();
+  const qty    = parseInt(interaction.fields.getTextInputValue('acao_qty').trim(), 10);
+
+  if (isNaN(qty) || qty < 1) {
+    await interaction.reply({ content: '❌ Quantidade inválida. Use um número inteiro maior que 0.', ephemeral: true });
+    return;
+  }
+
+  const cats = JSON.parse(JSON.stringify(config.CATEGORIAS_ESCALACAO ?? []));
+  if (!cats[catIdx]) { await interaction.reply({ content: '❌ Categoria não encontrada.', ephemeral: true }); return; }
+  cats[catIdx].acoes = cats[catIdx].acoes ?? [];
+  cats[catIdx].acoes.push({ nome, qty });
+  config.salvarConfig({ CATEGORIAS_ESCALACAO: cats });
+
+  const { embed, rows } = buildCatDetailView(catIdx);
+  await interaction.update({ embeds: [embed], components: rows });
+}
+
+async function handleConfigEscCatAcaoRem(interaction, catIdx) {
+  const acaoIdx = parseInt(interaction.values[0], 10);
+  const cats    = JSON.parse(JSON.stringify(config.CATEGORIAS_ESCALACAO ?? []));
+  if (cats[catIdx]) {
+    cats[catIdx].acoes?.splice(acaoIdx, 1);
+    config.salvarConfig({ CATEGORIAS_ESCALACAO: cats });
+  }
+  const { embed, rows } = buildCatDetailView(catIdx);
+  await interaction.update({ embeds: [embed], components: rows });
+}
+
+// ─── Aparência do Bot ──────────────────────────────────────────────────────────
+async function handleConfigBotEditar(interaction) {
+  const modal = new ModalBuilder().setCustomId('modal_cfg_bot_editar').setTitle('Editar Bot');
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('bot_nome')
+        .setLabel('Novo nome do bot (deixe em branco p/ manter)')
+        .setPlaceholder(interaction.client.user.username)
+        .setValue('')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(32)
+        .setRequired(false),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('bot_avatar')
+        .setLabel('URL do novo avatar (deixe em branco p/ manter)')
+        .setPlaceholder('https://...')
+        .setValue('')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(500)
+        .setRequired(false),
+    ),
+  );
+  await interaction.showModal(modal);
+}
+
+async function handleModalConfigBotEditar(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+  const nome   = interaction.fields.getTextInputValue('bot_nome').trim();
+  const avatar = interaction.fields.getTextInputValue('bot_avatar').trim();
+  const msgs   = [];
+
+  if (nome) {
+    try {
+      await interaction.client.user.setUsername(nome);
+      config.salvarConfig({ BOT_NOME_DISPLAY: nome });
+      msgs.push(`✅ Nome alterado para **${nome}**`);
+    } catch (err) {
+      msgs.push(`❌ Erro ao alterar nome: ${err.message}`);
+    }
+  }
+
+  if (avatar && avatar.startsWith('http')) {
+    try {
+      const res    = await fetch(avatar);
+      const buffer = Buffer.from(await res.arrayBuffer());
+      await interaction.client.user.setAvatar(buffer);
+      msgs.push('✅ Avatar atualizado');
+    } catch (err) {
+      msgs.push(`❌ Erro ao alterar avatar: ${err.message}`);
+    }
+  }
+
+  if (!msgs.length) msgs.push('ℹ️ Nenhuma alteração realizada.');
+  await interaction.editReply({ content: msgs.join('\n') });
+}
+
+async function handleConfigBotImg(interaction) {
+  const modal = new ModalBuilder().setCustomId('modal_cfg_bot_img').setTitle('Imagem Global Padrão');
+  modal.addComponents(
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId('bot_img_url')
+        .setLabel('URL da imagem padrão (fallback global)')
+        .setValue(String(config.IMG_PADRAO ?? ''))
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(500)
+        .setRequired(true),
+    ),
+  );
+  await interaction.showModal(modal);
+}
+
+async function handleModalConfigBotImg(interaction) {
+  const url = interaction.fields.getTextInputValue('bot_img_url').trim();
+  if (!url.startsWith('http')) {
+    await interaction.reply({ content: '❌ URL inválida.', ephemeral: true });
+    return;
+  }
+  config.salvarConfig({ IMG_PADRAO: url });
+  await interaction.reply({ content: '✅ Imagem global padrão atualizada!', ephemeral: true });
+}
+
 module.exports = {
   handleConfigurar,
   handleConfigBack,
@@ -726,4 +1008,17 @@ module.exports = {
   handleConfigPainelBtn,
   handleModalConfigPainel,
   handleConfigEscRadio,
+  handleConfigRankingValor,
+  handleConfigEscCats,
+  handleConfigEscCatAdd,
+  handleModalConfigEscCat,
+  handleConfigEscCatSel,
+  handleConfigEscCatDel,
+  handleConfigEscCatAcaoAdd,
+  handleModalConfigEscCatAcao,
+  handleConfigEscCatAcaoRem,
+  handleConfigBotEditar,
+  handleModalConfigBotEditar,
+  handleConfigBotImg,
+  handleModalConfigBotImg,
 };

@@ -41,7 +41,7 @@ async function handleVendaChannel(client, guild) {
       .setAccentColor(config.VENDA_COR ?? 0xFF0000)
       .addMediaGalleryComponents(
         new MediaGalleryBuilder().addItems(
-          new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO),
+          new MediaGalleryItemBuilder().setURL(config.getImg('VENDA')),
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
@@ -88,6 +88,15 @@ async function handleVendaBotao(interaction) {
     ),
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
+        .setCustomId('venda_valor')
+        .setLabel('Valor da venda ($)')
+        .setPlaceholder('Ex: 50.000')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(20)
+        .setRequired(true),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
         .setCustomId('venda_parceria')
         .setLabel('Foi na parceria? (Sim / Não)')
         .setPlaceholder('Sim ou Não')
@@ -97,12 +106,12 @@ async function handleVendaBotao(interaction) {
     ),
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
-        .setCustomId('venda_valor')
-        .setLabel('Valor da venda ($)')
-        .setPlaceholder('Ex: 50.000')
+        .setCustomId('venda_foto')
+        .setLabel('Link do comprovante (print/foto)')
+        .setPlaceholder('Cole o link da imagem ou deixe em branco para enviar depois')
         .setStyle(TextInputStyle.Short)
-        .setMaxLength(20)
-        .setRequired(true),
+        .setMaxLength(500)
+        .setRequired(false),
     ),
   );
 
@@ -117,6 +126,7 @@ async function handleModalVenda(interaction) {
   const produto  = interaction.fields.getTextInputValue('venda_produto');
   const parceria = interaction.fields.getTextInputValue('venda_parceria');
   const valor    = interaction.fields.getTextInputValue('venda_valor');
+  const foto     = interaction.fields.getTextInputValue('venda_foto').trim();
   const nomeCanal = parsearNick(member);
 
   const permissoes = [
@@ -132,18 +142,37 @@ async function handleModalVenda(interaction) {
     const canal = await guild.channels.create(options);
 
     const timestamp = `<t:${Math.floor(Date.now() / 1000)}:f>`;
-    const container = new ContainerBuilder()
-      .setAccentColor(0x57F287)
-      .addTextDisplayComponents(
-        new TextDisplayBuilder().setContent(
-          `## 💰  Registro de Venda\n\n` +
-          `Olá ${member}! Sua venda foi registrada abaixo.\n\n` +
-          `🏢 **Facção:** \`${fac}\`\n` +
-          `📦 **Produto:** \`${produto}\`\n` +
-          `🤝 **Parceria:** \`${parceria}\`\n` +
-          `💵 **Valor:** \`$${valor}\`\n\n` +
-          `📸 **Comprovante:** *Envie a foto abaixo desta mensagem.*\n\n` +
-          `-# Registrado por ${member}  ·  ${timestamp}`,
+    const semFoto   = !foto;
+
+    const texto =
+      `## 💰  Registro de Venda\n\n` +
+      `Olá ${member}! Sua venda foi registrada abaixo.\n\n` +
+      `🏢 **Facção:** \`${fac}\`\n` +
+      `📦 **Produto:** \`${produto}\`\n` +
+      `🤝 **Parceria:** \`${parceria}\`\n` +
+      `💵 **Valor:** \`$${valor}\`\n\n` +
+      (semFoto ? `📸 **Comprovante:** *Envie a foto abaixo desta mensagem.*\n\n` : '') +
+      `-# Registrado por ${member}  ·  ${timestamp}`;
+
+    const container = new ContainerBuilder().setAccentColor(0xFEE75C);
+
+    if (foto) {
+      try {
+        container.addMediaGalleryComponents(
+          new MediaGalleryBuilder().addItems(
+            new MediaGalleryItemBuilder().setURL(foto),
+          ),
+        );
+      } catch {}
+    }
+
+    container
+      .addTextDisplayComponents(new TextDisplayBuilder().setContent(texto))
+      .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
+      .addActionRowComponents(
+        new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId(`venda_aprovar_${member.id}`).setLabel('✅ Aprovar').setStyle(ButtonStyle.Success),
+          new ButtonBuilder().setCustomId(`venda_recusar_${member.id}`).setLabel('❌ Recusar').setStyle(ButtonStyle.Danger),
         ),
       );
 
@@ -155,4 +184,48 @@ async function handleModalVenda(interaction) {
   }
 }
 
-module.exports = { handleVendaChannel, handleVendaBotao, handleModalVenda };
+function extrairTexto(msg) {
+  const getText = (comp) => {
+    if (!comp) return '';
+    const type    = comp.type    ?? comp.data?.type;
+    const content = comp.content ?? comp.data?.content;
+    if (type === 10) return typeof content === 'string' ? content : '';
+    const children = comp.components ?? comp.data?.components ?? [];
+    return Array.isArray(children) ? children.map(getText).join('\n') : '';
+  };
+  return msg.components.map(getText).filter(Boolean).join('\n');
+}
+
+async function handleVendaAprovar(interaction, userId) {
+  await interaction.deferUpdate();
+  const texto = extrairTexto(interaction.message);
+  const container = new ContainerBuilder()
+    .setAccentColor(0x57F287)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`${texto}\n\n✅ **Aprovado por** <@${interaction.user.id}>`),
+    );
+  await interaction.message.edit({ components: [container], flags: MessageFlags.IsComponentsV2 });
+
+  try {
+    const membro = await interaction.guild.members.fetch(userId);
+    await membro.send(`✅ Sua venda foi **aprovada** no servidor **${interaction.guild.name}**!`);
+  } catch {}
+}
+
+async function handleVendaRecusar(interaction, userId) {
+  await interaction.deferUpdate();
+  const texto = extrairTexto(interaction.message);
+  const container = new ContainerBuilder()
+    .setAccentColor(0xED4245)
+    .addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(`${texto}\n\n❌ **Recusado por** <@${interaction.user.id}>`),
+    );
+  await interaction.message.edit({ components: [container], flags: MessageFlags.IsComponentsV2 });
+
+  try {
+    const membro = await interaction.guild.members.fetch(userId);
+    await membro.send(`❌ Sua venda foi **recusada** no servidor **${interaction.guild.name}**.`);
+  } catch {}
+}
+
+module.exports = { handleVendaChannel, handleVendaBotao, handleModalVenda, handleVendaAprovar, handleVendaRecusar };

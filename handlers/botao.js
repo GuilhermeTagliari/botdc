@@ -36,7 +36,7 @@ async function handleRecrutamentoChannel(client, guild) {
       .setAccentColor(config.RECRUTAMENTO_COR ?? 0x3498DB)
       .addMediaGalleryComponents(
         new MediaGalleryBuilder().addItems(
-          new MediaGalleryItemBuilder().setURL(config.IMG_PADRAO),
+          new MediaGalleryItemBuilder().setURL(config.getImg('RECRUTAMENTO')),
         ),
       )
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
