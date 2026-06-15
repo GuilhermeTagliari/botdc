@@ -92,6 +92,27 @@ const {
   handleAdminLimparQtd:   handleCodLimparQtd,
   handleModalLimparQtd,
 } = require('./handlers/codiguinho');
+const { handleArmasChannel, handleArmasBotao, handleModalArmas } = require('./handlers/armas');
+const { handleVendaChannel, handleVendaBotao, handleModalVenda } = require('./handlers/venda');
+const {
+  handleConfigurar,
+  handleConfigBack,
+  handleConfigMenu,
+  handleConfigChBtn,
+  handleConfigChSel,
+  handleConfigRoleBtn,
+  handleConfigRoleSel,
+  handleConfigRolesBtn,
+  handleConfigRolesAdd,
+  handleConfigRolesRm,
+  handleConfigRolesClr,
+  handleConfigListaBtn,
+  handleConfigListaAddBtn,
+  handleModalConfigLista,
+  handleConfigListaRm,
+  handleConfigListaClr,
+  handleConfigSetup,
+} = require('./handlers/configurar');
 const {
   handleTicketChannel,
   handleTicketSelect,
@@ -339,6 +360,9 @@ const LISTA_COMANDOS = [
       },
       { name: 'codiguinho-setup', description: 'Envia o painel de codiguinho no canal configurado', defaultMemberPermissions: '8' },
       { name: 'cod-admin',        description: 'Painel de gerenciamento do estoque de codiguinhos', defaultMemberPermissions: '8' },
+      { name: 'armas-setup',      description: 'Envia o painel de solicitação de armas no canal configurado', defaultMemberPermissions: '8' },
+      { name: 'venda-setup',      description: 'Envia o painel de registro de vendas no canal configurado', defaultMemberPermissions: '8' },
+      { name: 'configurar',       description: 'Configura o bot (canais, cargos e ações predefinidas)', defaultMemberPermissions: '8' },
 ];
 
 async function registrarComandos(client) {
@@ -720,6 +744,16 @@ client.on('interactionCreate', async (interaction) => {
         await interaction.editReply({ content: '✅ Painel de codiguinho enviado!' });
       } else if (interaction.commandName === 'cod-admin') {
         await handleCodAdmin(interaction);
+      } else if (interaction.commandName === 'armas-setup') {
+        await interaction.deferReply({ ephemeral: true });
+        await handleArmasChannel(client, interaction.guild);
+        await interaction.editReply({ content: '✅ Painel de armas enviado!' });
+      } else if (interaction.commandName === 'venda-setup') {
+        await interaction.deferReply({ ephemeral: true });
+        await handleVendaChannel(client, interaction.guild);
+        await interaction.editReply({ content: '✅ Painel de vendas enviado!' });
+      } else if (interaction.commandName === 'configurar') {
+        await handleConfigurar(interaction);
       }
       return;
     }
@@ -743,6 +777,11 @@ client.on('interactionCreate', async (interaction) => {
       } else if (interaction.customId === 'modal_codiguinho')    await handleModalCodiguinho(interaction);
       else if (interaction.customId === 'modal_cod_add')         await handleModalAddCodigos(interaction);
       else if (interaction.customId === 'modal_cod_limpar_qtd')  await handleModalLimparQtd(interaction);
+      else if (interaction.customId === 'modal_armas')           await handleModalArmas(interaction);
+      else if (interaction.customId === 'modal_venda')           await handleModalVenda(interaction);
+      else if (interaction.customId.startsWith('modal_cfg_lista_')) {
+        await handleModalConfigLista(interaction, interaction.customId.slice('modal_cfg_lista_'.length));
+      }
       return;
     }
 
@@ -756,6 +795,30 @@ client.on('interactionCreate', async (interaction) => {
         interaction.customId === 'esc_select_pequena'
       ) {
         await handleEscalacaoSelectAcao(interaction);
+      } else if (interaction.customId === 'cfg_menu') {
+        await handleConfigMenu(interaction);
+      } else if (interaction.customId.startsWith('cfg_lista_rm_')) {
+        await handleConfigListaRm(interaction, interaction.customId.slice('cfg_lista_rm_'.length));
+      }
+      return;
+    }
+
+    // Channel select menus
+    if (interaction.isChannelSelectMenu()) {
+      if (interaction.customId.startsWith('cfg_ch_sel_')) {
+        await handleConfigChSel(interaction, interaction.customId.slice('cfg_ch_sel_'.length));
+      }
+      return;
+    }
+
+    // Role select menus
+    if (interaction.isRoleSelectMenu()) {
+      if (interaction.customId.startsWith('cfg_role_sel_')) {
+        await handleConfigRoleSel(interaction, interaction.customId.slice('cfg_role_sel_'.length));
+      } else if (interaction.customId.startsWith('cfg_roles_add_')) {
+        await handleConfigRolesAdd(interaction, interaction.customId.slice('cfg_roles_add_'.length));
+      } else if (interaction.customId.startsWith('cfg_roles_rm_')) {
+        await handleConfigRolesRm(interaction, interaction.customId.slice('cfg_roles_rm_'.length));
       }
       return;
     }
@@ -843,6 +906,28 @@ client.on('interactionCreate', async (interaction) => {
         await handleCodLimparAll(interaction);
       } else if (customId === 'cod_admin_limpar_qtd') {
         await handleCodLimparQtd(interaction);
+      } else if (customId === 'armas_solicitar') {
+        await handleArmasBotao(interaction);
+      } else if (customId === 'venda_criar') {
+        await handleVendaBotao(interaction);
+      } else if (customId === 'cfg_back') {
+        await handleConfigBack(interaction);
+      } else if (customId.startsWith('cfg_setup_')) {
+        await handleConfigSetup(interaction, customId.slice('cfg_setup_'.length), client);
+      } else if (customId.startsWith('cfg_lista_add_')) {
+        await handleConfigListaAddBtn(interaction, customId.slice('cfg_lista_add_'.length));
+      } else if (customId.startsWith('cfg_lista_clr_')) {
+        await handleConfigListaClr(interaction, customId.slice('cfg_lista_clr_'.length));
+      } else if (customId.startsWith('cfg_lista_')) {
+        await handleConfigListaBtn(interaction, customId.slice('cfg_lista_'.length));
+      } else if (customId.startsWith('cfg_roles_clr_')) {
+        await handleConfigRolesClr(interaction, customId.slice('cfg_roles_clr_'.length));
+      } else if (customId.startsWith('cfg_roles_')) {
+        await handleConfigRolesBtn(interaction, customId.slice('cfg_roles_'.length));
+      } else if (customId.startsWith('cfg_role_')) {
+        await handleConfigRoleBtn(interaction, customId.slice('cfg_role_'.length));
+      } else if (customId.startsWith('cfg_ch_')) {
+        await handleConfigChBtn(interaction, customId.slice('cfg_ch_'.length));
       }
       return;
     }
