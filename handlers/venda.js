@@ -14,6 +14,7 @@ const {
   MessageFlags,
 } = require('discord.js');
 const config = require('../config');
+const { txt } = require('../textos');
 const { formatarValorBR } = require('../utils/formato');
 
 // reqId → { memberId, memberTag, fac, produto, quantidade, valor, parceria }
@@ -26,12 +27,12 @@ function parsearNick(member) {
 }
 
 function buildVendaModal(produtoPrefill = '') {
-  const modal = new ModalBuilder().setCustomId('modal_venda').setTitle('Registrar Venda');
+  const modal = new ModalBuilder().setCustomId('modal_venda').setTitle(txt('venda.titulo', 'Registrar Venda'));
   modal.addComponents(
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('venda_fac')
-        .setLabel('Nome da facção')
+        .setLabel(txt('venda.fac', 'Nome da facção'))
         .setPlaceholder('Ex: Los Santos Cartel')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(60)
@@ -40,7 +41,7 @@ function buildVendaModal(produtoPrefill = '') {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('venda_produto')
-        .setLabel('O que vendeu')
+        .setLabel(txt('venda.produto', 'O que vendeu'))
         .setPlaceholder('Ex: Cocaína, Armas, Lança...')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(100)
@@ -50,7 +51,7 @@ function buildVendaModal(produtoPrefill = '') {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('venda_quantidade')
-        .setLabel('Quantidade')
+        .setLabel(txt('venda.qtd', 'Quantidade'))
         .setPlaceholder('Ex: 5 unidades, 10 kg...')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(50)
@@ -59,7 +60,7 @@ function buildVendaModal(produtoPrefill = '') {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('venda_valor')
-        .setLabel('Valor da venda')
+        .setLabel(txt('venda.valor', 'Valor da venda'))
         .setPlaceholder('Ex: 50.000')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(20)
@@ -68,7 +69,7 @@ function buildVendaModal(produtoPrefill = '') {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('venda_parceria')
-        .setLabel('Foi na parceria? (Sim / Não)')
+        .setLabel(txt('venda.parceria', 'Foi na parceria? (Sim / Não)'))
         .setPlaceholder('Sim ou Não')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(10)
@@ -180,8 +181,8 @@ async function handleModalVenda(interaction) {
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addActionRowComponents(
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`venda_confirmar_${reqId}`).setLabel('✅ Confirmar').setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId(`venda_cancelar_${reqId}`).setLabel('❌ Cancelar').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId(`venda_confirmar_${reqId}`).setLabel(txt('venda.btn_confirmar', '✅ Confirmar')).setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId(`venda_cancelar_${reqId}`).setLabel(txt('venda.btn_cancelar', '❌ Cancelar')).setStyle(ButtonStyle.Danger),
       ),
     );
 

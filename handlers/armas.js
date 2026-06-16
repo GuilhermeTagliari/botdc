@@ -13,6 +13,7 @@ const {
   MessageFlags,
 } = require('discord.js');
 const config = require('../config');
+const { txt } = require('../textos');
 const { temPermissao } = require('../utils/permissao');
 const { dmEmbed } = require('../utils/dm');
 
@@ -59,13 +60,13 @@ async function handleArmasChannel(client, guild) {
 }
 
 async function handleArmasBotao(interaction) {
-  const modal = new ModalBuilder().setCustomId('modal_armas').setTitle('Solicitar Armas');
+  const modal = new ModalBuilder().setCustomId('modal_armas').setTitle(txt('armas.titulo', 'Solicitar Armas'));
 
   modal.addComponents(
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('armas_arma')
-        .setLabel('Arma solicitada')
+        .setLabel(txt('armas.arma', 'Arma solicitada'))
         .setPlaceholder('Ex: Pistola, Fuzil, Escopeta...')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(100)
@@ -74,7 +75,7 @@ async function handleArmasBotao(interaction) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('armas_muni')
-        .setLabel('Quantidade de munição')
+        .setLabel(txt('armas.muni', 'Quantidade de munição'))
         .setPlaceholder('Ex: 200')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(10)
@@ -110,8 +111,8 @@ async function handleModalArmas(interaction) {
       .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
       .addActionRowComponents(
         new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId(`armas_aprovar_${member.id}`).setLabel('✅ Aprovar').setStyle(ButtonStyle.Success),
-          new ButtonBuilder().setCustomId(`armas_recusar_${member.id}`).setLabel('❌ Recusar').setStyle(ButtonStyle.Danger),
+          new ButtonBuilder().setCustomId(`armas_aprovar_${member.id}`).setLabel(txt('armas.btn_aprovar', '✅ Aprovar')).setStyle(ButtonStyle.Success),
+          new ButtonBuilder().setCustomId(`armas_recusar_${member.id}`).setLabel(txt('armas.btn_recusar', '❌ Recusar')).setStyle(ButtonStyle.Danger),
         ),
       );
 

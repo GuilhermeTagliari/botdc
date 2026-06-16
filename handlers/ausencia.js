@@ -15,6 +15,7 @@ const {
 const fs   = require('fs');
 const path = require('path');
 const config = require('../config');
+const { txt } = require('../textos');
 const { dmEmbed } = require('../utils/dm');
 const { temPermissao } = require('../utils/permissao');
 
@@ -74,7 +75,7 @@ function criarContainerAusencia(aus, ausId = null) {
         new ActionRowBuilder().addComponents(
           new ButtonBuilder()
             .setCustomId(`aus_encerrar_${ausId}`)
-            .setLabel('⏹️ Encerrar Ausência')
+            .setLabel(txt('aus.btn_encerrar', '⏹️ Encerrar Ausência'))
             .setStyle(ButtonStyle.Secondary),
         ),
       );
@@ -133,13 +134,13 @@ async function handleAusenciaSetup(client, guild) {
 async function handleAusenciaBotao(interaction) {
   const modal = new ModalBuilder()
     .setCustomId('modal_ausencia')
-    .setTitle('Solicitar Ausência');
+    .setTitle(txt('aus.titulo', 'Solicitar Ausência'));
 
   modal.addComponents(
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('aus_dias')
-        .setLabel('Quantos dias de ausência? (1 a 60)')
+        .setLabel(txt('aus.dias', 'Quantos dias de ausência? (1 a 60)'))
         .setPlaceholder('Ex: 7')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(3)
@@ -148,7 +149,7 @@ async function handleAusenciaBotao(interaction) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('aus_motivo')
-        .setLabel('Motivo da ausência')
+        .setLabel(txt('aus.motivo', 'Motivo da ausência'))
         .setPlaceholder('Ex: Viagem, problemas pessoais...')
         .setStyle(TextInputStyle.Paragraph)
         .setMaxLength(300)
@@ -186,8 +187,8 @@ async function handleModalAusencia(interaction) {
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addActionRowComponents(
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`aus_aprovar_${interaction.user.id}_${dias}`).setLabel('✅ Aprovar').setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId(`aus_reprovar_${interaction.user.id}`).setLabel('❌ Reprovar').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId(`aus_aprovar_${interaction.user.id}_${dias}`).setLabel(txt('aus.btn_aprovar', '✅ Aprovar')).setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId(`aus_reprovar_${interaction.user.id}`).setLabel(txt('aus.btn_reprovar', '❌ Reprovar')).setStyle(ButtonStyle.Danger),
       ),
     );
 
@@ -304,7 +305,13 @@ async function atualizarAusencias(client) {
         await msg.edit({ components: [criarContainerAusencia(aus, ausId)], flags: MessageFlags.IsComponentsV2 });
       }
     } catch (err) {
-      console.error(`[${new Date().toISOString()}] Erro ao atualizar ausência ${ausId}:`, err.message);
+      if (err.code === 10008 || err.code === 10003) {
+        console.warn(`[${new Date().toISOString()}] Ausência ${ausId} órfã (mensagem/canal apagado) — encerrando.`);
+        aus.encerrada = true;
+        salvarDados();
+      } else {
+        console.error(`[${new Date().toISOString()}] Erro ao atualizar ausência ${ausId}:`, err.message);
+      }
     }
   }
 }

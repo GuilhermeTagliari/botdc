@@ -24,6 +24,14 @@ process.on('exit', _limparLock);
 process.on('SIGINT',  () => { _limparLock(); process.exit(0); });
 process.on('SIGTERM', () => { _limparLock(); process.exit(0); });
 
+// ─── Handlers globais de erro (evita o bot cair do nada) ───────
+process.on('unhandledRejection', (reason) => {
+  console.error(`[${new Date().toISOString()}] UNHANDLED REJECTION:`, reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error(`[${new Date().toISOString()}] UNCAUGHT EXCEPTION:`, err);
+});
+
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
 const { handleRecrutamentoChannel, handleBotao } = require('./handlers/botao');
 const { handleModal }             = require('./handlers/modal');
@@ -81,6 +89,7 @@ const {
 } = require('./handlers/ausencia');
 const { logEntrada, registrarSaida, handleAuditEntry, carregarConvites, handleInviteCreate, handleInviteDelete, handleVoiceStateUpdate } = require('./handlers/log');
 const {
+  carregarCodigos,
   handleCodiguinhoChannel,
   handleCodiguinhoBotao,
   handleModalCodiguinho,
@@ -141,6 +150,9 @@ const {
   handleModalConfigBotEditar,
   handleConfigBotImg,
   handleModalConfigBotImg,
+  handleConfigTextosModulo,
+  handleTextoGrupoBtn,
+  handleTextoModal,
 } = require('./handlers/configurar');
 const {
   handleTicketChannel,
@@ -164,6 +176,10 @@ const client = new Client({
   ],
   partials: [Partials.Channel],
 });
+
+client.on('error',      (err) => console.error(`[${new Date().toISOString()}] client error:`, err));
+client.on('shardError', (err) => console.error(`[${new Date().toISOString()}] shard error:`, err));
+client.on('warn',       (msg) => console.warn (`[${new Date().toISOString()}] client warn: ${msg}`));
 
 const LISTA_COMANDOS = [
       { name: 'recrutamento-setup', description: 'Envia a mensagem de recrutamento no canal configurado', defaultMemberPermissions: '8' },
@@ -421,7 +437,8 @@ async function registrarComandos(client) {
 
 client.once('ready', async () => {
   console.log(`[${new Date().toISOString()}] Bot online: ${client.user.tag} — versão ${VERSAO}`);
-  const { salvarConfig } = require('./config');
+  const { salvarConfig, carregarConfigRemoto } = require('./config');
+  await carregarConfigRemoto();
   salvarConfig({ BOT_NOME_DISPLAY: client.user.username });
   client.user.setPresence({
     activities: [{ name: 'Quer o bot no seu servidor? Entre em contato com o _zecaa.', type: 3 }],
@@ -436,6 +453,7 @@ client.once('ready', async () => {
   await restaurarSorteios(client);
   await restaurarEscalacoes(client);
   await restaurarAusencias(client);
+  await carregarCodigos();
 });
 
 client.on('guildCreate', async (guild) => {
@@ -785,8 +803,9 @@ client.on('interactionCreate', async (interaction) => {
             '`/stats [usuário]` — Vitórias, derrotas e V/D de um membro\n' +
             '`/status` — Status e informações do bot\n' +
             '`/comandos` — Exibe esta lista de comandos',
-          ))
-          .addSeparatorComponents(new SBcmd().setDivider(true))
+          ));
+        const containerCmds2 = new CBcmd()
+          .setAccentColor(0x3498DB)
           .addTextDisplayComponents(new TDBcmd().setContent(
             '## ⚙️ Como funciona o /configurar\n\n' +
             'Use `/configurar` para configurar todos os aspectos do bot sem editar nenhum arquivo. Requer **Administrador**.\n\n' +
@@ -829,6 +848,7 @@ client.on('interactionCreate', async (interaction) => {
             '-# Never Pure  ·  Feito por zeca',
           ));
         await interaction.editReply({ components: [containerCmds], flags: MFcmd.IsComponentsV2 });
+        await interaction.followUp({ components: [containerCmds2], flags: MFcmd.IsComponentsV2 | MFcmd.Ephemeral });
       } else if (interaction.commandName === 'codiguinho-setup') {
         await interaction.deferReply({ ephemeral: true });
         await handleCodiguinhoChannel(client, interaction.guild);
@@ -893,6 +913,8 @@ client.on('interactionCreate', async (interaction) => {
         await handleModalConfigLista(interaction, interaction.customId.slice('modal_cfg_lista_'.length));
       } else if (interaction.customId.startsWith('modal_cfg_painel_')) {
         await handleModalConfigPainel(interaction, interaction.customId.slice('modal_cfg_painel_'.length));
+      } else if (interaction.customId.startsWith('modal_txt_')) {
+        await handleTextoModal(interaction, interaction.customId.slice('modal_txt_'.length));
       }
       return;
     }
@@ -1052,6 +1074,12 @@ client.on('interactionCreate', async (interaction) => {
         await handleConfigBotEditar(interaction);
       } else if (customId === 'cfg_bot_img') {
         await handleConfigBotImg(interaction);
+      } else if (customId.startsWith('cfg_txtmod_')) {
+        await handleConfigTextosModulo(interaction, customId.slice('cfg_txtmod_'.length));
+      } else if (customId === 'cfg_txtback') {
+        await handleConfigMenu(interaction, 'textos');
+      } else if (customId.startsWith('txtg_')) {
+        await handleTextoGrupoBtn(interaction, customId.slice('txtg_'.length));
       } else if (customId === 'cfg_back') {
         await handleConfigBack(interaction);
       } else if (customId === 'cfg_escradio') {

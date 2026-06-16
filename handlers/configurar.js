@@ -5,6 +5,7 @@ const {
   EmbedBuilder,
 } = require('discord.js');
 const config = require('../config');
+const { REGISTRO, acharGrupo, txt } = require('../textos');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const ch  = (id)  => id ? `<#${id}>` : '`não configurado`';
@@ -27,6 +28,7 @@ const SECOES = [
   { value: 'advertencias', label: 'Advertências',              emoji: '⚠️', description: 'Cargos por nível de warn' },
   { value: 'setup',        label: 'Setup — Enviar Mensagens',  emoji: '🔧', description: 'Envia mensagens nos canais configurados' },
   { value: 'aparencia',   label: 'Aparência do Bot',          emoji: '🎨', description: 'Nome, avatar e imagem global padrão' },
+  { value: 'textos',      label: 'Textos (modais e botões)',  emoji: '📝', description: 'Edita títulos, campos e botões dos formulários' },
 ];
 
 function menuEmbed() {
@@ -69,6 +71,24 @@ function buildSecao(secao) {
   const voltar = new ActionRowBuilder().addComponents(btn('cfg_back', '← Menu', ButtonStyle.Danger));
 
   switch (secao) {
+    case 'textos': {
+      const rows = [];
+      let row = new ActionRowBuilder();
+      Object.entries(REGISTRO).forEach(([key, mod], i) => {
+        if (i > 0 && i % 4 === 0) { rows.push(row); row = new ActionRowBuilder(); }
+        row.addComponents(btn(`cfg_txtmod_${key}`, `${mod.emoji} ${mod.nome}`, ButtonStyle.Primary));
+      });
+      if (row.components.length) rows.push(row);
+      rows.push(voltar);
+      return {
+        embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
+          `## 📝 Textos\n\nEscolha o módulo cujos textos você quer editar ` +
+          `(título do formulário, nome dos campos e texto dos botões).`,
+        ),
+        rows,
+      };
+    }
+
     case 'recrutamento': return {
       embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
         `## 📋 Recrutamento\n\n` +
@@ -127,18 +147,22 @@ function buildSecao(secao) {
         `📺 **Canal Setup Farm:** ${ch(c.CANAL_FARM_BTN)}\n` +
         `📁 **Categoria Farm:** ${ch(c.CATEGORIA_FARM)}\n` +
         `👑 **Cargos Farm ADM:** ${rls(c.CARGOS_FARM_ADM)}\n` +
-        `📁 **Categoria Farm ADM:** ${ch(c.CATEGORIA_FARM_ADM)}\n\n` +
+        `📁 **Categoria Farm ADM:** ${ch(c.CATEGORIA_FARM_ADM)}\n` +
+        `⭐ **Cargos Farm Elite:** ${rls(c.CARGOS_FARM_ELITE)}\n` +
+        `📁 **Categoria Farm Elite:** ${ch(c.CATEGORIA_FARM_ELITE)}\n\n` +
         `**Painel:** ${c.FARM_TITULO}  ·  🎨 #${(c.FARM_COR ?? 0x57F287).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
-          btn('cfg_ch_CANAL_FARM_BTN',     '📺 Canal Setup', ButtonStyle.Primary),
-          btn('cfg_ch_CATEGORIA_FARM',     '📁 Cat. Farm',   ButtonStyle.Primary),
-          btn('cfg_ch_CATEGORIA_FARM_ADM', '📁 Cat. ADM',    ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_FARM_BTN',       '📺 Canal Setup',  ButtonStyle.Primary),
+          btn('cfg_ch_CATEGORIA_FARM',       '📁 Cat. Farm',    ButtonStyle.Primary),
+          btn('cfg_ch_CATEGORIA_FARM_ADM',   '📁 Cat. ADM',     ButtonStyle.Primary),
+          btn('cfg_ch_CATEGORIA_FARM_ELITE', '📁 Cat. Elite',   ButtonStyle.Primary),
         ),
         new ActionRowBuilder().addComponents(
-          btn('cfg_roles_CARGOS_FARM_ADM', '👑 Cargos ADM',          ButtonStyle.Secondary),
-          btn('cfg_painel_farm',           '✏️ Personalizar Painel', ButtonStyle.Secondary),
+          btn('cfg_roles_CARGOS_FARM_ADM',   '👑 Cargos ADM',          ButtonStyle.Secondary),
+          btn('cfg_roles_CARGOS_FARM_ELITE', '⭐ Cargos Elite',         ButtonStyle.Secondary),
+          btn('cfg_painel_farm',             '✏️ Personalizar Painel', ButtonStyle.Secondary),
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],
@@ -657,7 +681,7 @@ async function handleConfigPainelBtn(interaction, modulo) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('painel_img')
-        .setLabel('URL da imagem do painel (deixe em branco p/ manter)')
+        .setLabel('URL da imagem (vazio = manter)')
         .setValue(keys.imgKey ? String(config[keys.imgKey] ?? config.IMG_PADRAO ?? '') : String(config.IMG_PADRAO ?? ''))
         .setStyle(TextInputStyle.Short)
         .setMaxLength(500)
@@ -988,7 +1012,7 @@ async function handleConfigBotEditar(interaction) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('bot_avatar')
-        .setLabel('URL do novo avatar (deixe em branco p/ manter)')
+        .setLabel('URL do avatar (vazio = manter)')
         .setPlaceholder('https://...')
         .setValue('')
         .setStyle(TextInputStyle.Short)
@@ -1056,6 +1080,61 @@ async function handleModalConfigBotImg(interaction) {
   await interaction.reply({ content: '✅ Imagem global padrão atualizada!', ephemeral: true });
 }
 
+// ─── Textos customizáveis (modais e botões) ────────────────────────────────────
+async function handleConfigTextosModulo(interaction, modulo) {
+  const mod = REGISTRO[modulo];
+  if (!mod) { await interaction.reply({ content: '❌ Módulo desconhecido.', ephemeral: true }); return; }
+  const rows = [];
+  let row = new ActionRowBuilder();
+  mod.grupos.forEach((g, i) => {
+    if (i > 0 && i % 5 === 0) { rows.push(row); row = new ActionRowBuilder(); }
+    row.addComponents(btn(`txtg_${g.id}`, g.titulo.replace(`${mod.nome} · `, ''), ButtonStyle.Secondary));
+  });
+  if (row.components.length) rows.push(row);
+  rows.push(new ActionRowBuilder().addComponents(btn('cfg_txtback', '← Textos', ButtonStyle.Danger)));
+  await interaction.update({
+    embeds: [new EmbedBuilder().setColor(0x5865F2).setDescription(
+      `## 📝 ${mod.emoji} ${mod.nome}\n\nEscolha o que editar. Cada botão abre um formulário com os textos atuais — ` +
+      `deixe um campo **vazio** para voltar ao padrão.`,
+    )],
+    components: rows,
+  });
+}
+
+async function handleTextoGrupoBtn(interaction, grupoId) {
+  const g = acharGrupo(grupoId);
+  if (!g) { await interaction.reply({ content: '❌ Grupo não encontrado.', ephemeral: true }); return; }
+  const modal = new ModalBuilder().setCustomId(`modal_txt_${grupoId}`).setTitle(g.titulo.slice(0, 45));
+  for (const item of g.itens) {
+    modal.addComponents(new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
+        .setCustomId(item.chave)
+        .setLabel(item.label.slice(0, 45))
+        .setValue(txt(item.chave, item.padrao).slice(0, 100))
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(100)
+        .setRequired(false),
+    ));
+  }
+  await interaction.showModal(modal);
+}
+
+async function handleTextoModal(interaction, grupoId) {
+  const g = acharGrupo(grupoId);
+  if (!g) { await interaction.reply({ content: '❌ Grupo não encontrado.', ephemeral: true }); return; }
+  const textos = { ...(config.TEXTOS || {}) };
+  for (const item of g.itens) {
+    const v = interaction.fields.getTextInputValue(item.chave).trim();
+    if (v && v !== item.padrao) textos[item.chave] = v;
+    else delete textos[item.chave];
+  }
+  config.salvarConfig({ TEXTOS: textos });
+  await interaction.reply({
+    content: `✅ Textos de **${g.titulo}** atualizados! Se for um botão de painel, use **Setup → Enviar Mensagens** para repostar.`,
+    ephemeral: true,
+  });
+}
+
 module.exports = {
   handleConfigurar,
   handleConfigBack,
@@ -1092,4 +1171,7 @@ module.exports = {
   handleModalConfigBotEditar,
   handleConfigBotImg,
   handleModalConfigBotImg,
+  handleConfigTextosModulo,
+  handleTextoGrupoBtn,
+  handleTextoModal,
 };

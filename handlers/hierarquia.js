@@ -125,7 +125,12 @@ async function atualizarHierarquia(guild) {
     await msg.edit({ components: [container], flags: MessageFlags.IsComponentsV2 });
     console.log(`[${new Date().toISOString()}] Hierarquia atualizada: ${guild.name}`);
   } catch (err) {
-    console.error(`[${new Date().toISOString()}] Erro ao atualizar hierarquia:`, err);
+    if (err.code === 10008 || err.code === 10003) {
+      console.warn(`[${new Date().toISOString()}] Hierarquia órfã (mensagem/canal apagado) — limpando registro.`);
+      salvarDados({});
+    } else {
+      console.error(`[${new Date().toISOString()}] Erro ao atualizar hierarquia:`, err);
+    }
   }
 }
 

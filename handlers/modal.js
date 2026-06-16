@@ -35,7 +35,7 @@ async function handleModal(interaction) {
       new TextDisplayBuilder().setContent(
         `## 📋 Ficha de Recrutamento\n\n` +
         `Última etapa: selecione o membro que te recrutou.\n\n` +
-        `**👤 Nome:** ${nome}  ·  **🪪 ID:** \`${id}\`  ·  **📞 Telefone:** ${telefone}`,
+        `**👤 Nome:** ${nome}  ·  **🪪 ID:** \`${id}\`  ·  **🎮 Número in game:** ${telefone}`,
       ),
     )
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))

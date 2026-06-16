@@ -11,6 +11,7 @@ const {
 } = require('discord.js');
 const { pendingFichas } = require('../state');
 const config = require('../config');
+const { txt } = require('../textos');
 
 async function handleSelecaoRecrutador(interaction) {
   await interaction.deferUpdate();
@@ -38,7 +39,7 @@ async function handleSelecaoRecrutador(interaction) {
             `Uma nova ficha aguarda aprovação.\n\n` +
             `**👤 Nome:** ${dados.nome}\n` +
             `**🪪 ID:** \`${dados.id}\`\n` +
-            `**📞 Telefone:** ${dados.telefone}\n` +
+            `**🎮 Número in game:** ${dados.telefone}\n` +
             `**👥 Discord:** <@${userId}>\n` +
             `**🤝 Recrutado por:** <@${recrutadorId}>\n` +
             `**🕐 Data/hora:** ${timestamp}\n\n` +
@@ -52,8 +53,8 @@ async function handleSelecaoRecrutador(interaction) {
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addActionRowComponents(
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`aprovar_${userId}`).setLabel('✅ Aprovar').setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId(`reprovar_${userId}`).setLabel('❌ Reprovar').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId(`aprovar_${userId}`).setLabel(txt('recrut.btn_aprovar', '✅ Aprovar')).setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId(`reprovar_${userId}`).setLabel(txt('recrut.btn_reprovar', '❌ Reprovar')).setStyle(ButtonStyle.Danger),
       ),
     );
 

@@ -330,7 +330,15 @@ async function atualizarRanking(guild) {
     const container = await construirContainer(guild);
     await msg.edit({ components: [container], flags: MessageFlags.IsComponentsV2 });
   } catch (err) {
-    console.error(`[${new Date().toISOString()}] Erro ao atualizar ranking:`, err);
+    if (err.code === 10008 || err.code === 10003) {
+      console.warn(`[${new Date().toISOString()}] Ranking órfão (mensagem/canal apagado) — limpando registro.`);
+      salvarRanking({});
+    } else if (err.code === 'GuildChannelUnowned') {
+      console.warn(`[${new Date().toISOString()}] Canal de ranking não pertence a esta guild — limpando registro. Reconfigure em /configurar → Ranking.`);
+      salvarRanking({});
+    } else {
+      console.error(`[${new Date().toISOString()}] Erro ao atualizar ranking:`, err);
+    }
   }
 }
 

@@ -17,6 +17,7 @@ const {
 const fs   = require('fs');
 const path = require('path');
 const config = require('../config');
+const { txt } = require('../textos');
 const { temPermissao } = require('../utils/permissao');
 const { dmEmbed } = require('../utils/dm');
 
@@ -75,7 +76,7 @@ async function restaurarFarms(client) {
   console.log(`[${new Date().toISOString()}] JSON de farms vazio — escaneando canais...`);
 
   for (const guild of client.guilds.cache.values()) {
-    const categorias = [config.CATEGORIA_FARM, config.CATEGORIA_FARM_ADM].filter(Boolean);
+    const categorias = [config.CATEGORIA_FARM, config.CATEGORIA_FARM_ADM, config.CATEGORIA_FARM_ELITE].filter(Boolean);
     if (!categorias.length) continue;
 
     await guild.channels.fetch().catch(() => {});
@@ -208,8 +209,11 @@ async function handleFarmBotao(interaction) {
     { id: member.id,                  allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.ManageMessages] },
   ];
 
-  const isAdm    = temPermissao(member, config.CARGOS_FARM_ADM);
-  const categoria = isAdm && config.CATEGORIA_FARM_ADM ? config.CATEGORIA_FARM_ADM : config.CATEGORIA_FARM;
+  const isAdm   = temPermissao(member, config.CARGOS_FARM_ADM);
+  const isElite = temPermissao(member, config.CARGOS_FARM_ELITE);
+  let categoria = config.CATEGORIA_FARM;
+  if (isAdm && config.CATEGORIA_FARM_ADM)        categoria = config.CATEGORIA_FARM_ADM;
+  else if (isElite && config.CATEGORIA_FARM_ELITE) categoria = config.CATEGORIA_FARM_ELITE;
   const options   = { name: nomeCanal, type: ChannelType.GuildText, permissionOverwrites: permissoes };
   if (categoria) options.parent = categoria;
 
@@ -243,7 +247,7 @@ async function handleFarmSetupCanal(canal, member) {
       new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId('farm_registrar')
-          .setLabel('🌾 Registrar Farm')
+          .setLabel(txt('farm.btn_registrar', '🌾 Registrar Farm'))
           .setStyle(ButtonStyle.Success),
       ),
     );
@@ -256,13 +260,13 @@ async function handleFarmSetupCanal(canal, member) {
 async function handleFarmRegistrarBtn(interaction) {
   const modal = new ModalBuilder()
     .setCustomId('modal_farm')
-    .setTitle('Registrar Farm');
+    .setTitle(txt('farm.titulo', 'Registrar Farm'));
 
   modal.addComponents(
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('farm_quantidade')
-        .setLabel('Quantidade de farm')
+        .setLabel(txt('farm.qtd', 'Quantidade de farm'))
         .setPlaceholder('Ex: 500')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(10)
@@ -271,7 +275,7 @@ async function handleFarmRegistrarBtn(interaction) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('farm_horario')
-        .setLabel('Horário do depósito do farm')
+        .setLabel(txt('farm.horario', 'Horário do depósito do farm'))
         .setPlaceholder('Ex: 14:30')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(10)
@@ -280,7 +284,7 @@ async function handleFarmRegistrarBtn(interaction) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('farm_foto_url')
-        .setLabel('Link da foto (opcional)')
+        .setLabel(txt('farm.foto', 'Link da foto (opcional)'))
         .setPlaceholder('Cole o link da imagem — ou deixe vazio para registrar sem foto')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(500)
@@ -337,8 +341,8 @@ async function criarRegistroPendente(canal, userId, quantidade, horario, fotoUrl
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addActionRowComponents(
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`farm_aprovar_${farmId}`).setLabel('✅ Aprovar').setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId(`farm_reprovar_${farmId}`).setLabel('❌ Reprovar').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId(`farm_aprovar_${farmId}`).setLabel(txt('farm.btn_aprovar', '✅ Aprovar')).setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId(`farm_reprovar_${farmId}`).setLabel(txt('farm.btn_reprovar', '❌ Reprovar')).setStyle(ButtonStyle.Danger),
       ),
     );
 
@@ -564,7 +568,7 @@ async function handleFarmRelatorio(interaction) {
 
 // Localiza a sala de farm de um membro pela permissão no canal
 async function encontrarSalaFarm(guild, userId) {
-  const categorias = [config.CATEGORIA_FARM, config.CATEGORIA_FARM_ADM].filter(Boolean);
+  const categorias = [config.CATEGORIA_FARM, config.CATEGORIA_FARM_ADM, config.CATEGORIA_FARM_ELITE].filter(Boolean);
   if (categorias.length === 0) return null;
   await guild.channels.fetch();
   for (const canal of guild.channels.cache.values()) {

@@ -1,16 +1,11 @@
 require('dotenv').config();
-const fs   = require('fs');
-const path = require('path');
+const { supabase } = require('./supabase');
 
 function parseIds(env) {
   return env ? env.split(',').map((s) => s.trim()).filter(Boolean) : [];
 }
 
-const ARQUIVO = path.join(__dirname, 'data/botconfig.json');
-
-function lerArquivo() {
-  try { return JSON.parse(fs.readFileSync(ARQUIVO, 'utf8')); } catch { return {}; }
-}
+let _overrides = {};
 
 const config = {
   CANAL_RECRUTAMENTO:    process.env.CANAL_RECRUTAMENTO,
@@ -25,6 +20,8 @@ const config = {
   CATEGORIA_FARM:       process.env.CATEGORIA_FARM,
   CARGOS_FARM_ADM:      parseIds(process.env.CARGOS_FARM_ADM),
   CATEGORIA_FARM_ADM:   process.env.CATEGORIA_FARM_ADM,
+  CARGOS_FARM_ELITE:    parseIds(process.env.CARGOS_FARM_ELITE),
+  CATEGORIA_FARM_ELITE: process.env.CATEGORIA_FARM_ELITE,
   CARGO_FARM_APROVAR:   process.env.CARGO_FARM_APROVAR || '1497039755639128152',
 
   CARGO_AUSENCIA:           process.env.CARGO_AUSENCIA,
@@ -116,6 +113,9 @@ const config = {
     ]},
   ],
 
+  // ─── Textos customizáveis (modais e botões) ──────────────────────────────────────
+  TEXTOS:            {},
+
   // ─── Imagens ──────────────────────────────────────────────
   IMG_PADRAO:        'https://media.discordapp.net/attachments/1392674632544419963/1392675113262125056/Never_Pure_1920.jpg?ex=69ee0f85&is=69ecbe05&hm=3846f1cabdd4a1b55ad17216f5cc52b41d4f9805ae4a1973687884d3f04d494d&width=1535&height=863&',
   RECRUTAMENTO_IMG:  null,
@@ -174,23 +174,32 @@ const config = {
   AUSENCIA_BTN:        '🏖️ Solicitar Ausência',
 };
 
-function carregarConfig() {
-  const saved = lerArquivo();
-  for (const [k, v] of Object.entries(saved)) {
+async function carregarConfigRemoto() {
+  const { data, error } = await supabase
+    .from('bot_estado')
+    .select('valor')
+    .eq('chave', 'botconfig')
+    .single();
+  if (error && error.code !== 'PGRST116') {
+    console.error('[config] Erro ao carregar do Supabase:', error.message);
+    return;
+  }
+  _overrides = (data?.valor) ?? {};
+  for (const [k, v] of Object.entries(_overrides)) {
     if (v !== null && v !== undefined) config[k] = v;
   }
 }
 
 function salvarConfig(updates) {
-  const saved = lerArquivo();
-  const novo  = { ...saved, ...updates };
-  fs.writeFileSync(ARQUIVO, JSON.stringify(novo, null, 2));
+  _overrides = { ..._overrides, ...updates };
   for (const [k, v] of Object.entries(updates)) config[k] = v;
+  supabase
+    .from('bot_estado')
+    .upsert({ chave: 'botconfig', valor: _overrides, atualizado_em: new Date().toISOString() }, { onConflict: 'chave' })
+    .then(({ error }) => { if (error) console.error('[config] Erro ao salvar no Supabase:', error.message); });
 }
 
-carregarConfig();
-
 module.exports = config;
-module.exports.salvarConfig   = salvarConfig;
-module.exports.carregarConfig = carregarConfig;
+module.exports.salvarConfig        = salvarConfig;
+module.exports.carregarConfigRemoto = carregarConfigRemoto;
 module.exports.getImg = (modulo) => config[`${modulo}_IMG`] || config.IMG_PADRAO;

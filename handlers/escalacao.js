@@ -52,28 +52,35 @@ const ACOES = {
     { nome: 'Mc Donald',       qty: 3  },
   ],
 };
-const fs   = require('fs');
-const path = require('path');
 const config = require('../config');
+const { txt } = require('../textos');
 const { temPermissao } = require('../utils/permissao');
 const { formatarValorBR } = require('../utils/formato');
 const { atualizarRanking } = require('./ranking');
-
-const ARQUIVO = path.join(__dirname, '../data/escalacoes.json');
+const { supabase } = require('../supabase');
 
 // escId → { acao, quantidade, horario, slots: [], fechada, resultado, messageId, channelId, guildId }
 const escalacoes = new Map();
 
-function lerDados() {
-  try { return JSON.parse(fs.readFileSync(ARQUIVO, 'utf8')); } catch { return {}; }
+async function carregarEscalacoes() {
+  const { data, error } = await supabase
+    .from('bot_estado')
+    .select('valor')
+    .eq('chave', 'escalacoes')
+    .single();
+  if (error && error.code !== 'PGRST116') {
+    console.error('[escalacao] Erro ao carregar do Supabase:', error.message);
+    return {};
+  }
+  return (data?.valor) ?? {};
 }
 
-function salvarDados() {
-  const dados = {};
-  for (const [id, e] of escalacoes.entries()) {
-    dados[id] = e;
-  }
-  fs.writeFileSync(ARQUIVO, JSON.stringify(dados, null, 2));
+function salvarDados(dadosOverride) {
+  const dados = dadosOverride ?? Object.fromEntries(escalacoes.entries());
+  supabase
+    .from('bot_estado')
+    .upsert({ chave: 'escalacoes', valor: dados, atualizado_em: new Date().toISOString() }, { onConflict: 'chave' })
+    .then(({ error }) => { if (error) console.error('[escalacao] Erro ao salvar no Supabase:', error.message); });
 }
 
 function gerarId() {
@@ -89,12 +96,12 @@ function barraProgresso(preenchidos, total) {
 function botoesAberta(escId) {
   return [
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`esc_part_${escId}`).setLabel('✅ Participar').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId(`esc_sair_${escId}`).setLabel('❌ Sair').setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId(`esc_part_${escId}`).setLabel(txt('esc.btn_participar', '✅ Participar')).setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`esc_sair_${escId}`).setLabel(txt('esc.btn_sair', '❌ Sair')).setStyle(ButtonStyle.Danger),
     ),
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`esc_remover_${escId}`).setLabel('🗑️ Remover Membro').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`esc_fechar_${escId}`).setLabel('🔒 Fechar Ação').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`esc_remover_${escId}`).setLabel(txt('esc.btn_remover', '🗑️ Remover Membro')).setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`esc_fechar_${escId}`).setLabel(txt('esc.btn_fechar', '🔒 Fechar Ação')).setStyle(ButtonStyle.Secondary),
     ),
   ];
 }
@@ -102,9 +109,9 @@ function botoesAberta(escId) {
 function botoesResultado(escId) {
   return [
     new ActionRowBuilder().addComponents(
-      new ButtonBuilder().setCustomId(`esc_vitoria_${escId}`).setLabel('🏆 Vitória').setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId(`esc_derrota_${escId}`).setLabel('💀 Derrota').setStyle(ButtonStyle.Danger),
-      new ButtonBuilder().setCustomId(`esc_reabrir_${escId}`).setLabel('🔓 Reabrir Ação').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`esc_vitoria_${escId}`).setLabel(txt('esc.btn_vitoria', '🏆 Vitória')).setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`esc_derrota_${escId}`).setLabel(txt('esc.btn_derrota', '💀 Derrota')).setStyle(ButtonStyle.Danger),
+      new ButtonBuilder().setCustomId(`esc_reabrir_${escId}`).setLabel(txt('esc.btn_reabrir', '🔓 Reabrir Ação')).setStyle(ButtonStyle.Secondary),
     ),
   ];
 }
@@ -242,11 +249,11 @@ function makeSelectMenu(customId, placeholder, acoes) {
 
 
 function buildModal(nomePreenchido, qtyPreenchido) {
-  const modal = new ModalBuilder().setCustomId('modal_escalacao').setTitle('Criar Escalação');
+  const modal = new ModalBuilder().setCustomId('modal_escalacao').setTitle(txt('esc.titulo', 'Criar Escalação'));
 
   const acaoInput = new TextInputBuilder()
     .setCustomId('esc_acao')
-    .setLabel('Nome da Ação')
+    .setLabel(txt('esc.acao', 'Nome da Ação'))
     .setStyle(TextInputStyle.Short)
     .setMaxLength(60)
     .setRequired(true);
@@ -254,7 +261,7 @@ function buildModal(nomePreenchido, qtyPreenchido) {
 
   const qtdInput = new TextInputBuilder()
     .setCustomId('esc_quantidade')
-    .setLabel('Quantidade de pessoas (somente números)')
+    .setLabel(txt('esc.qtd', 'Quantidade de pessoas (somente números)'))
     .setPlaceholder('Ex: 5')
     .setStyle(TextInputStyle.Short)
     .setMaxLength(3)
@@ -271,7 +278,7 @@ function buildModal(nomePreenchido, qtyPreenchido) {
       new ActionRowBuilder().addComponents(
         new TextInputBuilder()
           .setCustomId('esc_radio')
-          .setLabel('Frequência de Rádio (opcional)')
+          .setLabel(txt('esc.radio', 'Frequência de Rádio (opcional)'))
           .setPlaceholder('Ex: 87.5 MHz')
           .setStyle(TextInputStyle.Short)
           .setMaxLength(30)
@@ -658,7 +665,7 @@ async function reconstruirDeCanal(guild) {
 }
 
 async function restaurarEscalacoes(client) {
-  const dados = lerDados();
+  const dados = await carregarEscalacoes();
   for (const [id, e] of Object.entries(dados)) {
     if (e.resultado) continue;
     escalacoes.set(id, e);

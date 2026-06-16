@@ -126,6 +126,7 @@ async function registrarSaida(member) {
 
 async function handleAuditEntry(entry, guild) {
   const { action, target, executor, changes, reason } = entry;
+  if (!target) return;   // alguns eventos chegam sem target (ex: cargo apagado) — ignorar
 
   // ── Kick ──
   if (action === AuditLogEvent.MemberKick) {

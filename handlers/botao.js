@@ -13,6 +13,7 @@ const {
   MessageFlags,
 } = require('discord.js');
 const config = require('../config');
+const { txt } = require('../textos');
 
 async function handleRecrutamentoChannel(client, guild) {
   try {
@@ -62,11 +63,11 @@ async function handleRecrutamentoChannel(client, guild) {
 async function handleBotao(interaction) {
   const modal = new ModalBuilder()
     .setCustomId('modal_ficha')
-    .setTitle('Ficha de Recrutamento');
+    .setTitle(txt('recrut.titulo', 'Ficha de Recrutamento'));
 
   const campoNome = new TextInputBuilder()
     .setCustomId('campo_nome')
-    .setLabel('Nome completo')
+    .setLabel(txt('recrut.nome', 'Nome completo'))
     .setPlaceholder('Ex: João Silva')
     .setStyle(TextInputStyle.Short)
     .setMaxLength(60)
@@ -74,7 +75,7 @@ async function handleBotao(interaction) {
 
   const campoId = new TextInputBuilder()
     .setCustomId('campo_id')
-    .setLabel('ID (somente números)')
+    .setLabel(txt('recrut.id', 'ID (somente números)'))
     .setPlaceholder('Ex: 12345')
     .setStyle(TextInputStyle.Short)
     .setMaxLength(20)
@@ -82,8 +83,8 @@ async function handleBotao(interaction) {
 
   const campoTelefone = new TextInputBuilder()
     .setCustomId('campo_telefone')
-    .setLabel('Telefone / WhatsApp')
-    .setPlaceholder('Ex: (11) 99999-9999')
+    .setLabel(txt('recrut.ingame', 'Número in game'))
+    .setPlaceholder('Ex: 1234')
     .setStyle(TextInputStyle.Short)
     .setMaxLength(20)
     .setRequired(true);

@@ -10,24 +10,41 @@ const {
   SeparatorBuilder,
   MessageFlags,
 } = require('discord.js');
-const fs   = require('fs');
-const path = require('path');
 const config = require('../config');
+const { txt } = require('../textos');
 const { temPermissao } = require('../utils/permissao');
 const { dmEmbed } = require('../utils/dm');
+const { supabase } = require('../supabase');
 
-const ARQUIVO = path.join(__dirname, '../data/codiguinhos.json');
+let _codigos = [];
 
-// reqId → { userId, nome, quantidade }
-const pendingRequests = new Map();
+async function carregarCodigos() {
+  const { data, error } = await supabase
+    .from('bot_estado')
+    .select('valor')
+    .eq('chave', 'codiguinhos')
+    .single();
+  if (error && error.code !== 'PGRST116') {
+    console.error('[codiguinho] Erro ao carregar do Supabase:', error.message);
+    return;
+  }
+  _codigos = (data?.valor) ?? [];
+}
 
 function lerCodigos() {
-  try { return JSON.parse(fs.readFileSync(ARQUIVO, 'utf8')); } catch { return []; }
+  return [..._codigos];
 }
 
 function salvarCodigos(lista) {
-  fs.writeFileSync(ARQUIVO, JSON.stringify(lista, null, 2));
+  _codigos = lista;
+  supabase
+    .from('bot_estado')
+    .upsert({ chave: 'codiguinhos', valor: lista, atualizado_em: new Date().toISOString() }, { onConflict: 'chave' })
+    .then(({ error }) => { if (error) console.error('[codiguinho] Erro ao salvar no Supabase:', error.message); });
 }
+
+// reqId → { userId, nome, quantidade }
+const pendingRequests = new Map();
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -67,12 +84,12 @@ async function handleCodiguinhoBotao(interaction) {
     return;
   }
 
-  const modal = new ModalBuilder().setCustomId('modal_codiguinho').setTitle('Solicitar Codiguinho 🎟️');
+  const modal = new ModalBuilder().setCustomId('modal_codiguinho').setTitle(txt('cod.titulo', 'Solicitar Codiguinho 🎟️'));
   modal.addComponents(
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('cod_nome')
-        .setLabel('Seu nome no jogo')
+        .setLabel(txt('cod.nome', 'Seu nome no jogo'))
         .setPlaceholder('Ex: João Silva')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(60)
@@ -81,7 +98,7 @@ async function handleCodiguinhoBotao(interaction) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('cod_quantidade')
-        .setLabel('Quantidade desejada')
+        .setLabel(txt('cod.qtd', 'Quantidade desejada'))
         .setPlaceholder('Ex: 1')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(3)
@@ -135,8 +152,8 @@ async function handleModalCodiguinho(interaction) {
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addActionRowComponents(
       new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId(`cod_aprovar_${reqId}`).setLabel('✅ Aprovar').setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId(`cod_recusar_${reqId}`).setLabel('❌ Recusar').setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId(`cod_aprovar_${reqId}`).setLabel(txt('cod.btn_aprovar', '✅ Aprovar')).setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId(`cod_recusar_${reqId}`).setLabel(txt('cod.btn_recusar', '❌ Recusar')).setStyle(ButtonStyle.Danger),
       ),
     );
 
@@ -398,6 +415,7 @@ async function handleModalLimparQtd(interaction) {
 }
 
 module.exports = {
+  carregarCodigos,
   handleCodiguinhoChannel,
   handleCodiguinhoBotao,
   handleModalCodiguinho,
