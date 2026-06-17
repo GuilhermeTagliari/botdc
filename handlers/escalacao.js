@@ -554,7 +554,7 @@ async function handleResultado(interaction, escId, vitoria) {
   if (!esc)          { await interaction.reply({ content: '❌ Escalação não encontrada ou expirada.', ephemeral: true }); return; }
   if (esc.resultado) { await interaction.reply({ content: '⚠️ O resultado desta escalação já foi registrado.', ephemeral: true }); return; }
 
-  if (vitoria && config.RANKING_PEDIR_VALOR) {
+  if (vitoria) {
     const modal = new ModalBuilder()
       .setCustomId(`modal_esc_valor_${escId}`)
       .setTitle('Registrar Vitória');
@@ -562,11 +562,11 @@ async function handleResultado(interaction, escId, vitoria) {
       new ActionRowBuilder().addComponents(
         new TextInputBuilder()
           .setCustomId('esc_valor')
-          .setLabel('Valor da ação (ex: R$ 50.000)')
+          .setLabel('Quanto dinheiro a ação rendeu?')
           .setStyle(TextInputStyle.Short)
           .setMaxLength(60)
-          .setRequired(false)
-          .setPlaceholder('Ex: R$ 50.000  ·  Opcional'),
+          .setRequired(true)
+          .setPlaceholder('Ex: R$ 50.000'),
       ),
     );
     await interaction.showModal(modal);
