@@ -58,6 +58,7 @@ const { temPermissao } = require('../utils/permissao');
 const { formatarValorBR } = require('../utils/formato');
 const { atualizarRanking } = require('./ranking');
 const { supabase } = require('../supabase');
+const { getAdvAtiva } = require('./adv');
 
 // escId → { acao, quantidade, horario, slots: [], fechada, resultado, messageId, channelId, guildId }
 const escalacoes = new Map();
@@ -416,7 +417,24 @@ async function handleParticipar(interaction, escId) {
   if (esc.slots.includes(interaction.user.id)) { await interaction.editReply({ content: '⚠️ Você já está nesta escalação.' }); return; }
 
   if (config.CARGO_ADV_ESC && interaction.member.roles.cache.has(config.CARGO_ADV_ESC)) {
-    await interaction.editReply({ content: '⛔ Você está suspenso de participar de escalações no momento.' });
+    const adv = getAdvAtiva(interaction.user.id);
+    const tsEncerra = adv ? `\n⏰ **Suspensão encerra:** <t:${Math.floor(adv.endTime / 1000)}:F>\n📋 **Motivo:** ${adv.motivo}` : '';
+    await interaction.editReply({ content: `⛔ Você está suspenso de participar de escalações no momento.${adv ? `\n⏰ Liberação: <t:${Math.floor(adv.endTime / 1000)}:F>` : ''}` });
+
+    if (config.CANAL_ADV_LOG) {
+      try {
+        const canalLog = await interaction.guild.channels.fetch(config.CANAL_ADV_LOG);
+        const text =
+          `## 🚫 Tentativa de Escalação Bloqueada\n\n` +
+          `👤 **Membro:** <@${interaction.user.id}>\n` +
+          `⚔️ **Ação:** ${esc.acao}${tsEncerra}\n\n` +
+          `-# Entrada bloqueada por suspensão  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
+        const container = new ContainerBuilder()
+          .setAccentColor(0xED4245)
+          .addTextDisplayComponents(new TextDisplayBuilder().setContent(text));
+        await canalLog.send({ components: [container], flags: MessageFlags.IsComponentsV2 });
+      } catch {}
+    }
     return;
   }
 

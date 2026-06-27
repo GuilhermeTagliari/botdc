@@ -220,4 +220,11 @@ async function handleModalAdv(interaction) {
   });
 }
 
-module.exports = { carregarAdvs, restaurarAdvs, handleAdvChannel, handleAdvAplicarBtn, handleModalAdv };
+function getAdvAtiva(userId) {
+  for (const adv of advertencias.values()) {
+    if (adv.userId === userId && !adv.encerrada && adv.endTime > Date.now()) return adv;
+  }
+  return null;
+}
+
+module.exports = { carregarAdvs, restaurarAdvs, handleAdvChannel, handleAdvAplicarBtn, handleModalAdv, getAdvAtiva };
