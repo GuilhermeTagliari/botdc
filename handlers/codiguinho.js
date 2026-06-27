@@ -28,7 +28,21 @@ async function carregarCodigos() {
     console.error('[codiguinho] Erro ao carregar do Supabase:', error.message);
     return;
   }
-  _codigos = (data?.valor) ?? [];
+  if (data?.valor && data.valor.length > 0) {
+    _codigos = data.valor;
+    return;
+  }
+  // Migração única: lê JSON local se Supabase estiver vazio
+  try {
+    const fs   = require('fs');
+    const path = require('path');
+    const lista = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/codiguinhos.json'), 'utf8'));
+    if (lista.length > 0) {
+      console.log(`[codiguinho] Migrando ${lista.length} código(s) do JSON para Supabase...`);
+      _codigos = lista;
+      salvarCodigos(lista);
+    }
+  } catch { /* arquivo não existe, começa vazio */ }
 }
 
 function lerCodigos() {

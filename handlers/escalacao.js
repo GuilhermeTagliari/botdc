@@ -72,7 +72,23 @@ async function carregarEscalacoes() {
     console.error('[escalacao] Erro ao carregar do Supabase:', error.message);
     return {};
   }
-  return (data?.valor) ?? {};
+  if (data?.valor && Object.keys(data.valor).length > 0) {
+    return data.valor;
+  }
+  // Migração única: lê JSON local se Supabase estiver vazio
+  try {
+    const fs   = require('fs');
+    const path = require('path');
+    const dados = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/escalacoes.json'), 'utf8'));
+    if (Object.keys(dados).length > 0) {
+      console.log(`[escalacao] Migrando ${Object.keys(dados).length} escalação(ões) do JSON para Supabase...`);
+      await supabase
+        .from('bot_estado')
+        .upsert({ chave: 'escalacoes', valor: dados, atualizado_em: new Date().toISOString() }, { onConflict: 'chave' });
+      return dados;
+    }
+  } catch { /* arquivo não existe */ }
+  return {};
 }
 
 function salvarDados(dadosOverride) {
