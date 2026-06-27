@@ -95,6 +95,7 @@ function buildSecao(secao) {
         `📺 **Canal Recrutamento:** ${ch(c.CANAL_RECRUTAMENTO)}\n` +
         `📬 **Canal Aprovação:** ${ch(c.CANAL_APROVACAO)}\n` +
         `✅ **Cargo Aprovado:** ${rl(c.CARGO_APROVADO)}\n` +
+        `👋 **Cargo Visitante:** ${rl(c.CARGO_VISITANTE)}\n` +
         `👥 **Cargos Aprovadores:** ${rls(c.CARGOS_APROVACAO)}\n\n` +
         `**Painel:** ${c.RECRUTAMENTO_TITULO}  ·  🎨 #${(c.RECRUTAMENTO_COR ?? 0x3498DB).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
@@ -103,6 +104,7 @@ function buildSecao(secao) {
           btn('cfg_ch_CANAL_RECRUTAMENTO', '📺 Canal Recrutamento', ButtonStyle.Primary),
           btn('cfg_ch_CANAL_APROVACAO',    '📬 Canal Aprovação',    ButtonStyle.Primary),
           btn('cfg_role_CARGO_APROVADO',   '✅ Cargo Aprovado',     ButtonStyle.Primary),
+          btn('cfg_role_CARGO_VISITANTE',  '👋 Cargo Visitante',    ButtonStyle.Secondary),
         ),
         new ActionRowBuilder().addComponents(
           btn('cfg_roles_CARGOS_APROVACAO',  '👥 Cargos Aprovadores', ButtonStyle.Secondary),
@@ -149,7 +151,8 @@ function buildSecao(secao) {
         `👑 **Cargos Farm ADM:** ${rls(c.CARGOS_FARM_ADM)}\n` +
         `📁 **Categoria Farm ADM:** ${ch(c.CATEGORIA_FARM_ADM)}\n` +
         `⭐ **Cargos Farm Elite:** ${rls(c.CARGOS_FARM_ELITE)}\n` +
-        `📁 **Categoria Farm Elite:** ${ch(c.CATEGORIA_FARM_ELITE)}\n\n` +
+        `📁 **Categoria Farm Elite:** ${ch(c.CATEGORIA_FARM_ELITE)}\n` +
+        `👥 **Staff Farm (vê salas):** ${rls(c.CARGOS_FARM_STAFF)}\n\n` +
         `**Painel:** ${c.FARM_TITULO}  ·  🎨 #${(c.FARM_COR ?? 0x57F287).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
@@ -162,7 +165,10 @@ function buildSecao(secao) {
         new ActionRowBuilder().addComponents(
           btn('cfg_roles_CARGOS_FARM_ADM',   '👑 Cargos ADM',          ButtonStyle.Secondary),
           btn('cfg_roles_CARGOS_FARM_ELITE', '⭐ Cargos Elite',         ButtonStyle.Secondary),
+          btn('cfg_roles_CARGOS_FARM_STAFF', '👥 Staff Farm',           ButtonStyle.Secondary),
           btn('cfg_painel_farm',             '✏️ Personalizar Painel', ButtonStyle.Secondary),
+        ),
+        new ActionRowBuilder().addComponents(
           btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
       ],

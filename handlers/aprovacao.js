@@ -81,6 +81,10 @@ async function handleAprovacao(interaction) {
       avisos.push(`⚠️ Cargo não atribuído: ${err.message}`);
     }
 
+    if (config.CARGO_VISITANTE) {
+      try { await membro.roles.remove(config.CARGO_VISITANTE); } catch {}
+    }
+
     if (isEmbedAntigo) {
       const embedAtualizado = EmbedBuilder.from(interaction.message.embeds[0])
         .setColor(0x57F287)

@@ -207,6 +207,10 @@ async function handleFarmBotao(interaction) {
     { id: guild.id,                   deny:  [PermissionFlagsBits.ViewChannel] },
     { id: interaction.client.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ManageChannels] },
     { id: member.id,                  allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.ManageMessages] },
+    ...(config.CARGOS_FARM_STAFF ?? []).map((id) => ({
+      id,
+      allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.SendMessages],
+    })),
   ];
 
   const isAdm   = temPermissao(member, config.CARGOS_FARM_ADM);
@@ -283,6 +287,15 @@ async function handleFarmRegistrarBtn(interaction) {
     ),
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
+        .setCustomId('farm_produto')
+        .setLabel(txt('farm.produto', 'Produto farmado'))
+        .setPlaceholder('Ex: Cocaína, Maconha, Metal...')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(60)
+        .setRequired(true),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
         .setCustomId('farm_foto_url')
         .setLabel(txt('farm.foto', 'Link da foto (opcional)'))
         .setPlaceholder('Cole o link da imagem — ou deixe vazio para registrar sem foto')
@@ -302,6 +315,7 @@ async function handleFarmModal(interaction) {
 
   const quantidadeRaw = interaction.fields.getTextInputValue('farm_quantidade');
   const horario       = interaction.fields.getTextInputValue('farm_horario');
+  const produto       = interaction.fields.getTextInputValue('farm_produto').trim();
   const fotoUrl       = interaction.fields.getTextInputValue('farm_foto_url').trim();
   const quantidade    = parseInt(quantidadeRaw.replace(/\D/g, ''), 10);
 
@@ -311,17 +325,18 @@ async function handleFarmModal(interaction) {
   }
 
   // Cria o registro imediatamente (com ou sem foto)
-  await criarRegistroPendente(interaction.channel, interaction.user.id, quantidade, horario, fotoUrl || null);
+  await criarRegistroPendente(interaction.channel, interaction.user.id, quantidade, horario, fotoUrl || null, produto);
   await interaction.editReply({ content: '✅ Registro enviado para aprovação da staff!' });
 }
 
 // ── Cria a mensagem de registro pendente no canal ─────────────────────────────
 
-async function criarRegistroPendente(canal, userId, quantidade, horario, fotoUrl) {
+async function criarRegistroPendente(canal, userId, quantidade, horario, fotoUrl, produto) {
   const farmId    = `farm_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
   const timestamp = Date.now();
   const qtdFmt    = quantidade.toLocaleString('pt-BR');
   const linhaFoto = fotoUrl ? `\n**📸 Foto:** [Clique para ver](${fotoUrl})` : '';
+  const linhaProduto = produto ? `**📦 Produto:** ${produto}\n` : '';
 
   const container = new ContainerBuilder().setAccentColor(0xFEE75C);
   if (fotoUrl) {
@@ -334,6 +349,7 @@ async function criarRegistroPendente(canal, userId, quantidade, horario, fotoUrl
       `## 🌾 Registro de Farm — Pendente\n\n` +
       `**👤 Membro:** <@${userId}>\n` +
       `**📦 Quantidade:** ${qtdFmt}\n` +
+      linhaProduto +
       `**🕐 Horário do depósito:** ${horario}\n` +
       `**📅 Enviado:** <t:${Math.floor(timestamp / 1000)}:F>${linhaFoto}\n\n` +
       `-# ⏳ Aguardando aprovação da staff`,
@@ -350,6 +366,7 @@ async function criarRegistroPendente(canal, userId, quantidade, horario, fotoUrl
     userId,
     quantidade,
     horario,
+    produto: produto ?? null,
     fotoUrl,
     status:    'pendente',
     motivo:    null,
@@ -407,6 +424,7 @@ async function handleFarmAprovar(interaction, farmId) {
   salvarDados();
 
   const linhaFotoAprov = entry.fotoUrl ? `**📸 Foto:** [Clique para ver](${entry.fotoUrl})\n\n` : '\n';
+  const linhaProdutoAprov = entry.produto ? `**📦 Produto:** ${entry.produto}\n` : '';
   const container = new ContainerBuilder().setAccentColor(0x57F287);
   if (entry.fotoUrl) {
     container
@@ -417,6 +435,7 @@ async function handleFarmAprovar(interaction, farmId) {
     `## 🌾 Farm Aprovado ✅\n\n` +
     `**👤 Membro:** <@${entry.userId}>\n` +
     `**📦 Quantidade:** ${entry.quantidade.toLocaleString('pt-BR')}\n` +
+    linhaProdutoAprov +
     `**🕐 Horário do depósito:** ${entry.horario}\n` +
     `**✅ Aprovado por:** <@${interaction.user.id}>\n` +
     linhaFotoAprov +
@@ -481,6 +500,7 @@ async function handleFarmReprovarModal(interaction, farmId) {
   salvarDados();
 
   const linhaFotoReprov = entry.fotoUrl ? `**📸 Foto:** [Clique para ver](${entry.fotoUrl})\n\n` : '\n';
+  const linhaProdutoReprov = entry.produto ? `**📦 Produto:** ${entry.produto}\n` : '';
   const container = new ContainerBuilder().setAccentColor(0x3498DB);
   if (entry.fotoUrl) {
     container
@@ -491,6 +511,7 @@ async function handleFarmReprovarModal(interaction, farmId) {
     `## 🌾 Farm Reprovado ❌\n\n` +
     `**👤 Membro:** <@${entry.userId}>\n` +
     `**📦 Quantidade:** ${entry.quantidade.toLocaleString('pt-BR')}\n` +
+    linhaProdutoReprov +
     `**🕐 Horário do depósito:** ${entry.horario}\n` +
     `**❌ Reprovado por:** <@${interaction.user.id}>\n` +
     `**📋 Motivo:** ${motivo}\n` +

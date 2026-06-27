@@ -399,6 +399,11 @@ async function handleParticipar(interaction, escId) {
   if (esc.fechada)                             { await interaction.editReply({ content: '🔒 Esta escalação já foi encerrada.' }); return; }
   if (esc.slots.includes(interaction.user.id)) { await interaction.editReply({ content: '⚠️ Você já está nesta escalação.' }); return; }
 
+  if (config.CARGO_ADV_ESC && interaction.member.roles.cache.has(config.CARGO_ADV_ESC)) {
+    await interaction.editReply({ content: '⛔ Você está suspenso de participar de escalações no momento.' });
+    return;
+  }
+
   const slotLivre = esc.slots.indexOf(null);
   if (slotLivre === -1) { await interaction.editReply({ content: '❌ Esta escalação já está cheia.' }); return; }
 

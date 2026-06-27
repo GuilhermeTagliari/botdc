@@ -104,6 +104,10 @@ const {
   handleModalLimparQtd,
 } = require('./handlers/codiguinho');
 const { handleArmasChannel, handleArmasBotao, handleModalArmas, handleArmasAprovar, handleArmasRecusar } = require('./handlers/armas');
+const { handlePdChannel, handlePdBotao, handleModalPd } = require('./handlers/pd');
+const { handleUpDownChannel, handleUpBtn, handleDownBtn, handleModalUpDown } = require('./handlers/updown');
+const { carregarEstoque, handleEstoqueChannel, handleEstoqueEntradaItemBtn, handleEstoqueSaidaItemBtn, handleEstoqueEntradaCaixaBtn, handleEstoqueSaidaCaixaBtn, handleEstoqueVerBtn, handleModalEstoqueEntradaItem, handleModalEstoqueSaidaItem, handleModalEstoqueEntradaCaixa, handleModalEstoqueSaidaCaixa } = require('./handlers/estoque');
+const { carregarAdvs, restaurarAdvs, handleAdvChannel, handleAdvAplicarBtn, handleModalAdv } = require('./handlers/adv');
 const {
   handleVendaChannel,
   handleVendaBotao,
@@ -404,6 +408,10 @@ const LISTA_COMANDOS = [
           { name: 'imagem',       description: 'URL de uma imagem para exibir no embed',     type: 3, required: false },
         ],
       },
+      { name: 'pd-setup',      description: 'Envia o painel de PD no canal configurado', defaultMemberPermissions: '8' },
+      { name: 'updown-setup',  description: 'Envia o painel de up/rebaixamento no canal configurado', defaultMemberPermissions: '8' },
+      { name: 'estoque-setup', description: 'Envia o painel de estoque no canal configurado', defaultMemberPermissions: '8' },
+      { name: 'adv-setup',     description: 'Envia o painel de advertências de escalação no canal configurado', defaultMemberPermissions: '8' },
       { name: 'codiguinho-setup', description: 'Envia o painel de codiguinho no canal configurado', defaultMemberPermissions: '8' },
       { name: 'cod-admin',        description: 'Painel de gerenciamento do estoque de codiguinhos', defaultMemberPermissions: '8' },
       { name: 'armas-setup',      description: 'Envia o painel de solicitação de armas no canal configurado', defaultMemberPermissions: '8' },
@@ -454,6 +462,15 @@ client.once('ready', async () => {
   await restaurarEscalacoes(client);
   await restaurarAusencias(client);
   await carregarCodigos();
+  await carregarEstoque();
+  await carregarAdvs();
+  await restaurarAdvs(client);
+  for (const guild of client.guilds.cache.values()) {
+    await handlePdChannel(client, guild);
+    await handleUpDownChannel(client, guild);
+    await handleEstoqueChannel(client, guild);
+    await handleAdvChannel(client, guild);
+  }
 });
 
 client.on('guildCreate', async (guild) => {
@@ -863,6 +880,22 @@ client.on('interactionCreate', async (interaction) => {
         await interaction.deferReply({ ephemeral: true });
         await handleVendaChannel(client, interaction.guild);
         await interaction.editReply({ content: '✅ Painel de vendas enviado!' });
+      } else if (interaction.commandName === 'pd-setup') {
+        await interaction.deferReply({ ephemeral: true });
+        await handlePdChannel(client, interaction.guild);
+        await interaction.editReply({ content: '✅ Painel de PD configurado!' });
+      } else if (interaction.commandName === 'updown-setup') {
+        await interaction.deferReply({ ephemeral: true });
+        await handleUpDownChannel(client, interaction.guild);
+        await interaction.editReply({ content: '✅ Painel de up/rebaixamento configurado!' });
+      } else if (interaction.commandName === 'estoque-setup') {
+        await interaction.deferReply({ ephemeral: true });
+        await handleEstoqueChannel(client, interaction.guild);
+        await interaction.editReply({ content: '✅ Painel de estoque configurado!' });
+      } else if (interaction.commandName === 'adv-setup') {
+        await interaction.deferReply({ ephemeral: true });
+        await handleAdvChannel(client, interaction.guild);
+        await interaction.editReply({ content: '✅ Painel de advertências configurado!' });
       } else if (interaction.commandName === 'configurar') {
         await handleConfigurar(interaction);
       } else if (interaction.commandName === 'entrar-call') {
@@ -896,6 +929,13 @@ client.on('interactionCreate', async (interaction) => {
       else if (interaction.customId === 'modal_cod_limpar_qtd')  await handleModalLimparQtd(interaction);
       else if (interaction.customId === 'modal_armas')           await handleModalArmas(interaction);
       else if (interaction.customId === 'modal_venda')           await handleModalVenda(interaction);
+      else if (interaction.customId === 'modal_pd')                  await handleModalPd(interaction);
+      else if (interaction.customId.startsWith('modal_updown_'))      await handleModalUpDown(interaction, interaction.customId.replace('modal_updown_', ''));
+      else if (interaction.customId === 'modal_est_entrada_item')     await handleModalEstoqueEntradaItem(interaction);
+      else if (interaction.customId === 'modal_est_saida_item')       await handleModalEstoqueSaidaItem(interaction);
+      else if (interaction.customId === 'modal_est_entrada_caixa')    await handleModalEstoqueEntradaCaixa(interaction);
+      else if (interaction.customId === 'modal_est_saida_caixa')      await handleModalEstoqueSaidaCaixa(interaction);
+      else if (interaction.customId === 'modal_adv')                  await handleModalAdv(interaction);
       else if (interaction.customId.startsWith('modal_esc_valor_')) {
         await handleModalValorResultado(interaction, interaction.customId.slice('modal_esc_valor_'.length));
       } else if (interaction.customId === 'modal_cfg_esc_cat') {
@@ -1058,6 +1098,24 @@ client.on('interactionCreate', async (interaction) => {
         await handleVendaConfirmar(interaction, customId.slice('venda_confirmar_'.length));
       } else if (customId.startsWith('venda_cancelar_')) {
         await handleVendaCancelar(interaction, customId.slice('venda_cancelar_'.length));
+      } else if (customId === 'pd_registrar') {
+        await handlePdBotao(interaction);
+      } else if (customId === 'updown_up') {
+        await handleUpBtn(interaction);
+      } else if (customId === 'updown_down') {
+        await handleDownBtn(interaction);
+      } else if (customId === 'est_entrada_item') {
+        await handleEstoqueEntradaItemBtn(interaction);
+      } else if (customId === 'est_saida_item') {
+        await handleEstoqueSaidaItemBtn(interaction);
+      } else if (customId === 'est_entrada_caixa') {
+        await handleEstoqueEntradaCaixaBtn(interaction);
+      } else if (customId === 'est_saida_caixa') {
+        await handleEstoqueSaidaCaixaBtn(interaction);
+      } else if (customId === 'est_ver') {
+        await handleEstoqueVerBtn(interaction);
+      } else if (customId === 'adv_aplicar') {
+        await handleAdvAplicarBtn(interaction);
       } else if (customId === 'cfg_ranking_valor') {
         await handleConfigRankingValor(interaction);
       } else if (customId === 'cfg_esc_cats') {
