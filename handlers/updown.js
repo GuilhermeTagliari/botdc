@@ -49,13 +49,14 @@ async function handleUpDownChannel(client, guild) {
 function buildSelecaoMsg(userId, tipo) {
   const p     = pending.get(userId) ?? {};
   const isUp  = tipo === 'up';
-  const pronto = !!(p.membroId && p.cargoAntesId && p.cargoNovoId);
+  const pronto = !!(p.membroId && (p.cargoAntesId || p.cargoNovoId));
 
   const linhas = [
     `**${isUp ? '⬆️ Registrar Promoção' : '⬇️ Registrar Rebaixamento'}**\n`,
     `👤 **Membro:** ${p.membroId ? `<@${p.membroId}>` : '`não selecionado`'}`,
-    `📌 **Cargo anterior:** ${p.cargoAntesId ? `<@&${p.cargoAntesId}>` : '`não selecionado`'}`,
-    `${isUp ? '⬆️' : '⬇️'} **Novo cargo:** ${p.cargoNovoId ? `<@&${p.cargoNovoId}>` : '`não selecionado`'}`,
+    `📌 **Cargo a remover:** ${p.cargoAntesId ? `<@&${p.cargoAntesId}>` : '`opcional`'}`,
+    `${isUp ? '⬆️' : '⬇️'} **Cargo a adicionar:** ${p.cargoNovoId ? `<@&${p.cargoNovoId}>` : '`opcional`'}`,
+    `-# Selecione ao menos um dos cargos.`,
   ].join('\n');
 
   return {
@@ -121,8 +122,8 @@ async function handleUpDownSelNovo(interaction, tipo) {
 
 async function handleUpDownConfirm(interaction, tipo) {
   const p = pending.get(interaction.user.id);
-  if (!p?.membroId || !p?.cargoAntesId || !p?.cargoNovoId) {
-    await interaction.reply({ content: '❌ Selecione o membro e os dois cargos antes de confirmar.', ephemeral: true });
+  if (!p?.membroId || (!p?.cargoAntesId && !p?.cargoNovoId)) {
+    await interaction.reply({ content: '❌ Selecione o membro e ao menos um cargo antes de confirmar.', ephemeral: true });
     return;
   }
 
@@ -161,7 +162,7 @@ async function handleModalUpDown(interaction, tipo) {
   const p = pending.get(interaction.user.id);
   pending.delete(interaction.user.id);
 
-  if (!p?.membroId || !p?.cargoAntesId || !p?.cargoNovoId) {
+  if (!p?.membroId || (!p?.cargoAntesId && !p?.cargoNovoId)) {
     await interaction.editReply({ content: '❌ Sessão expirada. Tente novamente clicando no botão.' });
     return;
   }
@@ -180,16 +181,18 @@ async function handleModalUpDown(interaction, tipo) {
     return;
   }
 
-  try { await membro.roles.remove(p.cargoAntesId); } catch { erros.push('remover cargo anterior'); }
-  try { await membro.roles.add(p.cargoNovoId); }    catch { erros.push('adicionar novo cargo'); }
+  if (p.cargoAntesId) { try { await membro.roles.remove(p.cargoAntesId); } catch { erros.push('remover cargo anterior'); } }
+  if (p.cargoNovoId)  { try { await membro.roles.add(p.cargoNovoId); }    catch { erros.push('adicionar novo cargo'); } }
   try { await membro.setNickname(apelido); }         catch { erros.push('renomear membro'); }
+
+  const linhaAntes = p.cargoAntesId ? `\n📌 **Cargo removido:** <@&${p.cargoAntesId}>` : '';
+  const linhaNovo  = p.cargoNovoId  ? `\n${isUp ? '⬆️' : '⬇️'} **Cargo adicionado:** <@&${p.cargoNovoId}>` : '';
 
   const text =
     `## ${titulo}\n\n` +
     `👤 **Membro:** <@${p.membroId}>\n` +
-    `🏷️ **Novo apelido:** \`${apelido}\`\n` +
-    `📌 **Cargo removido:** <@&${p.cargoAntesId}>\n` +
-    `${isUp ? '⬆️' : '⬇️'} **Cargo adicionado:** <@&${p.cargoNovoId}>\n` +
+    `🏷️ **Novo apelido:** \`${apelido}\`` +
+    linhaAntes + linhaNovo + `\n` +
     `📋 **Motivo:** ${motivo}\n\n` +
     `📝 Registrado por <@${interaction.user.id}>  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
 
