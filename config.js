@@ -11,6 +11,7 @@ const config = {
   CANAL_RECRUTAMENTO:    process.env.CANAL_RECRUTAMENTO,
   CANAL_APROVACAO:       process.env.CANAL_APROVACAO,
   CARGO_APROVADO:        process.env.CARGO_APROVADO,
+  CARGO_VISITANTE:       process.env.CARGO_VISITANTE,
 
   CANAL_ESCALACAO:         process.env.CANAL_ESCALACAO,
   CANAL_CONTROLE:          process.env.CANAL_CONTROLE,
@@ -22,6 +23,7 @@ const config = {
   CATEGORIA_FARM_ADM:   process.env.CATEGORIA_FARM_ADM,
   CARGOS_FARM_ELITE:    parseIds(process.env.CARGOS_FARM_ELITE),
   CATEGORIA_FARM_ELITE: process.env.CATEGORIA_FARM_ELITE,
+  CARGOS_FARM_STAFF:    parseIds(process.env.CARGOS_FARM_STAFF),
   CARGO_FARM_APROVAR:   process.env.CARGO_FARM_APROVAR || '1497039755639128152',
 
   CARGO_AUSENCIA:           process.env.CARGO_AUSENCIA,
@@ -112,6 +114,44 @@ const config = {
       { nome: 'Mc Donald',       qty: 3  },
     ]},
   ],
+
+  // ─── PD ───────────────────────────────────────────────────
+  CANAL_PD_BTN:         process.env.CANAL_PD_BTN,
+  CANAL_PD_LOG:         process.env.CANAL_PD_LOG,
+  PD_TITULO:            'PEDIDO DE DESLIGAMENTO',
+  PD_DESC:              'Registre um pedido de desligamento clicando no botão abaixo.',
+  PD_COR:               0xED4245,
+  PD_BTN:               '📋 Registrar PD',
+
+  // ─── Up / Rebaixamento ────────────────────────────────────
+  CANAL_UPDOWN_BTN:     process.env.CANAL_UPDOWN_BTN,
+  CANAL_UPDOWN_LOG:     process.env.CANAL_UPDOWN_LOG,
+  UPDOWN_TITULO:        'UP / REBAIXAMENTO',
+  UPDOWN_DESC:          'Registre promoções e rebaixamentos clicando nos botões abaixo.',
+  UPDOWN_COR:           0x3498DB,
+
+  // ─── Estoque ──────────────────────────────────────────────
+  CANAL_ESTOQUE_BTN:    process.env.CANAL_ESTOQUE_BTN,
+  CANAL_ESTOQUE_LOG:    process.env.CANAL_ESTOQUE_LOG,
+  CARGOS_ESTOQUE_ADM:   parseIds(process.env.CARGOS_ESTOQUE_ADM),
+  ESTOQUE_TITULO:       'ESTOQUE',
+  ESTOQUE_DESC:         'Gerencie o estoque de itens e caixa da facção.',
+  ESTOQUE_COR:          0x57F287,
+  ESTOQUE_BTN_ENTRADA_ITEM:  '📦 Entrada Item',
+  ESTOQUE_BTN_SAIDA_ITEM:    '📤 Saída Item',
+  ESTOQUE_BTN_ENTRADA_CAIXA: '💰 Entrada Caixa',
+  ESTOQUE_BTN_SAIDA_CAIXA:   '💸 Saída Caixa',
+  ESTOQUE_BTN_VER:           '📊 Ver Saldo',
+
+  // ─── Advertência de Escalação ─────────────────────────────
+  CARGO_ADV_ESC:        process.env.CARGO_ADV_ESC,
+  CANAL_ADV_BTN:        process.env.CANAL_ADV_BTN,
+  CANAL_ADV_LOG:        process.env.CANAL_ADV_LOG,
+  CARGOS_ADV_ADM:       parseIds(process.env.CARGOS_ADV_ADM),
+  ADV_TITULO:           'ADVERTÊNCIAS DE ESCALAÇÃO',
+  ADV_DESC:             'Registre suspensões de participação em escalações.',
+  ADV_COR:              0xFEE75C,
+  ADV_BTN:              '⚠️ Aplicar Advertência',
 
   // ─── Textos customizáveis (modais e botões) ──────────────────────────────────────
   TEXTOS:            {},
