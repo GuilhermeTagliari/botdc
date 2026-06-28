@@ -128,6 +128,13 @@ async function handleUpDownConfirm(interaction, tipo) {
   }
 
   const isUp = tipo === 'up';
+
+  let apelidoAtual = '';
+  try {
+    const mem = await interaction.guild.members.fetch(p.membroId);
+    apelidoAtual = mem.nickname ?? mem.user.displayName ?? '';
+  } catch {}
+
   const modal = new ModalBuilder()
     .setCustomId(`modal_updown_${tipo}`)
     .setTitle(isUp ? 'Registrar Promoção (Up)' : 'Registrar Rebaixamento');
@@ -137,6 +144,7 @@ async function handleUpDownConfirm(interaction, tipo) {
         .setCustomId('ud_apelido')
         .setLabel('Novo apelido do membro (opcional)')
         .setPlaceholder('Ex: 1234 | João Silva')
+        .setValue(apelidoAtual.slice(0, 32))
         .setStyle(TextInputStyle.Short)
         .setMaxLength(32)
         .setRequired(false),
