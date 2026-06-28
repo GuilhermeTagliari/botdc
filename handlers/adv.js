@@ -1,6 +1,7 @@
 const {
   ButtonBuilder, ButtonStyle, ActionRowBuilder,
   ModalBuilder, TextInputBuilder, TextInputStyle,
+  UserSelectMenuBuilder,
   ContainerBuilder, TextDisplayBuilder, SeparatorBuilder,
   MessageFlags,
 } = require('discord.js');
@@ -117,17 +118,26 @@ async function handleAdvAplicarBtn(interaction) {
     return;
   }
 
-  const modal = new ModalBuilder().setCustomId('modal_adv').setTitle('Aplicar Advertência de Escalação');
+  await interaction.reply({
+    content: '**Selecione o membro que receberá a advertência de escalação:**',
+    components: [
+      new ActionRowBuilder().addComponents(
+        new UserSelectMenuBuilder()
+          .setCustomId('adv_sel_membro')
+          .setPlaceholder('Selecione o membro...'),
+      ),
+    ],
+    ephemeral: true,
+  });
+}
+
+async function handleAdvMembroSel(interaction) {
+  const userId = interaction.values[0];
+
+  const modal = new ModalBuilder()
+    .setCustomId(`modal_adv_${userId}`)
+    .setTitle('Aplicar Advertência de Escalação');
   modal.addComponents(
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('adv_membro')
-        .setLabel('ID ou menção do membro')
-        .setPlaceholder('Ex: 123456789 ou <@123456789>')
-        .setStyle(TextInputStyle.Short)
-        .setMaxLength(100)
-        .setRequired(true),
-    ),
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('adv_dias')
@@ -153,12 +163,11 @@ async function handleAdvAplicarBtn(interaction) {
 async function handleModalAdv(interaction) {
   await interaction.deferReply({ ephemeral: true });
 
-  const membroRaw = interaction.fields.getTextInputValue('adv_membro').trim();
-  const diasRaw   = interaction.fields.getTextInputValue('adv_dias').trim();
-  const motivo    = interaction.fields.getTextInputValue('adv_motivo').trim();
+  const userId  = interaction.customId.slice('modal_adv_'.length);
+  const diasRaw = interaction.fields.getTextInputValue('adv_dias').trim();
+  const motivo  = interaction.fields.getTextInputValue('adv_motivo').trim();
 
-  const userId = membroRaw.replace(/[<@!>]/g, '');
-  const dias   = parseInt(diasRaw, 10);
+  const dias = parseInt(diasRaw, 10);
 
   if (isNaN(dias) || dias < 1 || dias > 90) {
     await interaction.editReply({ content: '❌ Número de dias inválido. Use um valor entre 1 e 90.' });
@@ -227,4 +236,4 @@ function getAdvAtiva(userId) {
   return null;
 }
 
-module.exports = { carregarAdvs, restaurarAdvs, handleAdvChannel, handleAdvAplicarBtn, handleModalAdv, getAdvAtiva };
+module.exports = { carregarAdvs, restaurarAdvs, handleAdvChannel, handleAdvAplicarBtn, handleAdvMembroSel, handleModalAdv, getAdvAtiva };

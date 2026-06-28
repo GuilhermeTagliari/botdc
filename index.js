@@ -107,7 +107,7 @@ const { handleArmasChannel, handleArmasBotao, handleModalArmas, handleArmasAprov
 const { handlePdChannel, handlePdBotao, handleModalPd } = require('./handlers/pd');
 const { handleUpDownChannel, handleUpBtn, handleDownBtn, handleModalUpDown } = require('./handlers/updown');
 const { carregarEstoque, handleEstoqueChannel, handleEstoqueEntradaItemBtn, handleEstoqueSaidaItemBtn, handleEstoqueEntradaCaixaBtn, handleEstoqueSaidaCaixaBtn, handleEstoqueVerBtn, handleModalEstoqueEntradaItem, handleModalEstoqueSaidaItem, handleModalEstoqueEntradaCaixa, handleModalEstoqueSaidaCaixa } = require('./handlers/estoque');
-const { carregarAdvs, restaurarAdvs, handleAdvChannel, handleAdvAplicarBtn, handleModalAdv } = require('./handlers/adv');
+const { carregarAdvs, restaurarAdvs, handleAdvChannel, handleAdvAplicarBtn, handleAdvMembroSel, handleModalAdv } = require('./handlers/adv');
 const {
   handleVendaChannel,
   handleVendaBotao,
@@ -935,7 +935,7 @@ client.on('interactionCreate', async (interaction) => {
       else if (interaction.customId === 'modal_est_saida_item')       await handleModalEstoqueSaidaItem(interaction);
       else if (interaction.customId === 'modal_est_entrada_caixa')    await handleModalEstoqueEntradaCaixa(interaction);
       else if (interaction.customId === 'modal_est_saida_caixa')      await handleModalEstoqueSaidaCaixa(interaction);
-      else if (interaction.customId === 'modal_adv')                  await handleModalAdv(interaction);
+      else if (interaction.customId.startsWith('modal_adv_'))          await handleModalAdv(interaction);
       else if (interaction.customId.startsWith('modal_esc_valor_')) {
         await handleModalValorResultado(interaction, interaction.customId.slice('modal_esc_valor_'.length));
       } else if (interaction.customId === 'modal_cfg_esc_cat') {
@@ -1009,6 +1009,8 @@ client.on('interactionCreate', async (interaction) => {
         await handleRemoverSelect(interaction, interaction.customId.slice('esc_remover_select_'.length));
       } else if (interaction.customId.startsWith('ticket_add_select_')) {
         await handleTicketAddSelect(interaction, interaction.customId.slice('ticket_add_select_'.length));
+      } else if (interaction.customId === 'adv_sel_membro') {
+        await handleAdvMembroSel(interaction);
       }
       return;
     }
