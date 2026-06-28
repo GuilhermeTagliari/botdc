@@ -104,7 +104,7 @@ const {
   handleModalLimparQtd,
 } = require('./handlers/codiguinho');
 const { handleArmasChannel, handleArmasBotao, handleModalArmas, handleArmasAprovar, handleArmasRecusar } = require('./handlers/armas');
-const { handlePdChannel, handlePdBotao, handleModalPd } = require('./handlers/pd');
+const { handlePdChannel, handlePdBotao, handlePdSelSolicitante, handlePdSelAutorizado, handlePdConfirm, handleModalPd } = require('./handlers/pd');
 const { handleUpDownChannel, handleUpBtn, handleDownBtn, handleUpDownSelMembro, handleUpDownSelAntes, handleUpDownSelNovo, handleUpDownConfirm, handleModalUpDown } = require('./handlers/updown');
 const { carregarEstoque, handleEstoqueChannel, handleEstoqueEntradaItemBtn, handleEstoqueSaidaItemBtn, handleEstoqueEntradaCaixaBtn, handleEstoqueSaidaCaixaBtn, handleEstoqueVerBtn, handleModalEstoqueEntradaItem, handleModalEstoqueSaidaItem, handleModalEstoqueEntradaCaixa, handleModalEstoqueSaidaCaixa } = require('./handlers/estoque');
 const { carregarAdvs, restaurarAdvs, handleAdvChannel, handleAdvAplicarBtn, handleAdvMembroSel, handleModalAdv } = require('./handlers/adv');
@@ -1017,6 +1017,10 @@ client.on('interactionCreate', async (interaction) => {
         await handleAdvMembroSel(interaction);
       } else if (interaction.customId.startsWith('updown_sel_membro_')) {
         await handleUpDownSelMembro(interaction, interaction.customId.slice('updown_sel_membro_'.length));
+      } else if (interaction.customId === 'pd_sel_solicitante') {
+        await handlePdSelSolicitante(interaction);
+      } else if (interaction.customId === 'pd_sel_autorizado') {
+        await handlePdSelAutorizado(interaction);
       }
       return;
     }
@@ -1108,6 +1112,8 @@ client.on('interactionCreate', async (interaction) => {
         await handleVendaCancelar(interaction, customId.slice('venda_cancelar_'.length));
       } else if (customId === 'pd_registrar') {
         await handlePdBotao(interaction);
+      } else if (customId === 'pd_confirm') {
+        await handlePdConfirm(interaction);
       } else if (customId === 'updown_up') {
         await handleUpBtn(interaction);
       } else if (customId === 'updown_down') {
