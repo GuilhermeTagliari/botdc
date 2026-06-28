@@ -442,9 +442,15 @@ async function handleParticipar(interaction, escId) {
   if (slotLivre === -1) { await interaction.editReply({ content: '❌ Esta escalação já está cheia.' }); return; }
 
   esc.slots[slotLivre] = interaction.user.id;
+
+  const cheia = esc.slots.every((s) => s !== null);
+  if (cheia) esc.fechada = true;
+
   salvarDados();
   await atualizarMensagem(interaction.guild, esc, escId);
-  await interaction.editReply({ content: `✅ Você entrou na escalação **${esc.acao}** — slot **${slotLivre + 1}** reservado!` });
+
+  const extra = cheia ? '\n🔒 Escalação completa — fechada automaticamente.' : '';
+  await interaction.editReply({ content: `✅ Você entrou na escalação **${esc.acao}** — slot **${slotLivre + 1}** reservado!${extra}` });
 }
 
 async function handleSair(interaction, escId) {
