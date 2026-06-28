@@ -241,7 +241,7 @@ async function handleModalEstoqueEntradaItem(interaction) {
     obsLinha + `\n\n` +
     `📝 Registrado por <@${interaction.user.id}>  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
 
-  await enviarLog(interaction.guild, text, 0x57F287);
+  await enviarLog(interaction.guild, text, 0x57F287, 'itens');
   await interaction.editReply({ content: `✅ **${qtd}** unidades de **${nome}** adicionadas ao estoque!` });
 }
 
@@ -278,7 +278,7 @@ async function handleModalEstoqueSaidaItem(interaction) {
     motivoLinha + `\n\n` +
     `📝 Registrado por <@${interaction.user.id}>  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
 
-  await enviarLog(interaction.guild, text, 0xED4245);
+  await enviarLog(interaction.guild, text, 0xED4245, 'itens');
   await interaction.editReply({ content: `✅ **${qtd}** unidades de **${nome}** removidas do estoque!` });
 }
 
@@ -304,7 +304,7 @@ async function handleModalEstoqueEntradaCaixa(interaction) {
     origemLinha + `\n\n` +
     `📝 Registrado por <@${interaction.user.id}>  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
 
-  await enviarLog(interaction.guild, text, 0x57F287);
+  await enviarLog(interaction.guild, text, 0x57F287, 'caixa');
   await interaction.editReply({ content: `✅ **${formatarValorBR(valor)}** adicionados ao caixa!` });
 }
 
@@ -330,16 +330,17 @@ async function handleModalEstoqueSaidaCaixa(interaction) {
     destinoLinha + `\n\n` +
     `📝 Registrado por <@${interaction.user.id}>  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
 
-  await enviarLog(interaction.guild, text, 0xED4245);
+  await enviarLog(interaction.guild, text, 0xED4245, 'caixa');
   await interaction.editReply({ content: `✅ **${formatarValorBR(valor)}** retirados do caixa!` });
 }
 
 // ── Log helper ────────────────────────────────────────────────────────────────
 
-async function enviarLog(guild, text, cor) {
-  if (!config.CANAL_ESTOQUE_LOG) return;
+async function enviarLog(guild, text, cor, tipo) {
+  const canalId = tipo === 'caixa' ? config.CANAL_ESTOQUE_LOG_CAIXA : config.CANAL_ESTOQUE_LOG_ITENS;
+  if (!canalId) return;
   try {
-    const canal = await guild.channels.fetch(config.CANAL_ESTOQUE_LOG);
+    const canal = await guild.channels.fetch(canalId);
     const container = new ContainerBuilder()
       .setAccentColor(cor)
       .addTextDisplayComponents(new TextDisplayBuilder().setContent(text));

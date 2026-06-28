@@ -131,8 +131,9 @@ const config = {
   UPDOWN_COR:           0x3498DB,
 
   // ─── Estoque ──────────────────────────────────────────────
-  CANAL_ESTOQUE_BTN:    process.env.CANAL_ESTOQUE_BTN,
-  CANAL_ESTOQUE_LOG:    process.env.CANAL_ESTOQUE_LOG,
+  CANAL_ESTOQUE_BTN:       process.env.CANAL_ESTOQUE_BTN,
+  CANAL_ESTOQUE_LOG_ITENS: process.env.CANAL_ESTOQUE_LOG_ITENS,
+  CANAL_ESTOQUE_LOG_CAIXA: process.env.CANAL_ESTOQUE_LOG_CAIXA,
   CARGOS_ESTOQUE_ADM:   parseIds(process.env.CARGOS_ESTOQUE_ADM),
   ESTOQUE_TITULO:       'ESTOQUE',
   ESTOQUE_DESC:         'Gerencie o estoque de itens e caixa da facção.',

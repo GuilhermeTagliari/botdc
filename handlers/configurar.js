@@ -378,18 +378,22 @@ function buildSecao(secao) {
       embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
         `## 📦 Estoque\n\n` +
         `📺 **Canal Setup:** ${ch(c.CANAL_ESTOQUE_BTN)}\n` +
-        `📬 **Canal Log:** ${ch(c.CANAL_ESTOQUE_LOG)}\n` +
+        `📦 **Log Itens:** ${ch(c.CANAL_ESTOQUE_LOG_ITENS)}\n` +
+        `💰 **Log Financeiro:** ${ch(c.CANAL_ESTOQUE_LOG_CAIXA)}\n` +
         `👥 **Cargos Admin:** ${rls(c.CARGOS_ESTOQUE_ADM)}\n\n` +
         `**Painel:** ${c.ESTOQUE_TITULO ?? 'ESTOQUE'}  ·  🎨 #${(c.ESTOQUE_COR ?? 0x5865F2).toString(16).padStart(6,'0').toUpperCase()}`,
       ),
       rows: [
         new ActionRowBuilder().addComponents(
-          btn('cfg_ch_CANAL_ESTOQUE_BTN',     '📺 Canal Setup',         ButtonStyle.Primary),
-          btn('cfg_ch_CANAL_ESTOQUE_LOG',     '📬 Canal Log',           ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_ESTOQUE_BTN',          '📺 Canal Setup',     ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_ESTOQUE_LOG_ITENS',    '📦 Log Itens',       ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_ESTOQUE_LOG_CAIXA',    '💰 Log Financeiro',  ButtonStyle.Primary),
+        ),
+        new ActionRowBuilder().addComponents(
           btn('cfg_roles_CARGOS_ESTOQUE_ADM', '👥 Cargos Admin',        ButtonStyle.Secondary),
           btn('cfg_painel_estoque',           '✏️ Personalizar Painel', ButtonStyle.Secondary),
+          btn('cfg_back', '← Menu', ButtonStyle.Danger),
         ),
-        new ActionRowBuilder().addComponents(btn('cfg_back', '← Menu', ButtonStyle.Danger)),
       ],
     };
 
