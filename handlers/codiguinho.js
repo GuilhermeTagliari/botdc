@@ -224,6 +224,7 @@ async function handleAprovar(interaction, reqId) {
         `🔢 **Quantidade:** **${req.quantidade}**\n` +
         `📬 **DM:** ${enviouDM ? '✅ Enviada' : '❌ DM fechada — envie manualmente'}\n` +
         `👮 **Aprovado por:** <@${interaction.user.id}>\n` +
+        `📦 **Estoque restante:** **${codigos.length}**\n` +
         (!enviouDM ? `\n**Códigos:**\n${listaCodigos}\n` : '') +
         `\n-# <t:${Math.floor(Date.now() / 1000)}:f>`,
       ),
