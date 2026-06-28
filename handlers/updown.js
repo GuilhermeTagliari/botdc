@@ -23,7 +23,11 @@ async function handleUpDownChannel(client, guild) {
     )
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(
-      new TextDisplayBuilder().setContent(`# ${config.UPDOWN_TITULO ?? 'UP / REBAIXAMENTO'}\n\n${config.UPDOWN_DESC ?? 'Registre promoções e rebaixamentos clicando nos botões abaixo.'}`),
+      new TextDisplayBuilder().setContent(
+        `# ${config.UPDOWN_TITULO ?? 'UP / REBAIXAMENTO'}\n\n` +
+        `${config.UPDOWN_DESC ?? 'Registre promoções e rebaixamentos clicando nos botões abaixo.'}\n\n` +
+        `-# Ao registrar, o bot removerá o cargo anterior, adicionará o novo cargo e renomeará o membro automaticamente.`,
+      ),
     )
     .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addActionRowComponents(
@@ -129,6 +133,15 @@ async function handleUpDownConfirm(interaction, tipo) {
   modal.addComponents(
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
+        .setCustomId('ud_apelido')
+        .setLabel('Novo apelido do membro')
+        .setPlaceholder('Ex: 1234 | João Silva')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(32)
+        .setRequired(true),
+    ),
+    new ActionRowBuilder().addComponents(
+      new TextInputBuilder()
         .setCustomId('ud_motivo')
         .setLabel('Motivo / Observação')
         .setPlaceholder('Descreva o motivo')
@@ -142,7 +155,8 @@ async function handleUpDownConfirm(interaction, tipo) {
 
 async function handleModalUpDown(interaction, tipo) {
   await interaction.deferReply({ ephemeral: true });
-  const motivo = interaction.fields.getTextInputValue('ud_motivo').trim();
+  const apelido = interaction.fields.getTextInputValue('ud_apelido').trim();
+  const motivo  = interaction.fields.getTextInputValue('ud_motivo').trim();
 
   const p = pending.get(interaction.user.id);
   pending.delete(interaction.user.id);
@@ -152,15 +166,30 @@ async function handleModalUpDown(interaction, tipo) {
     return;
   }
 
-  const isUp  = tipo === 'up';
-  const cor   = isUp ? 0x57F287 : 0xED4245;
+  const isUp   = tipo === 'up';
+  const cor    = isUp ? 0x57F287 : 0xED4245;
   const titulo = isUp ? '⬆️  Promoção Registrada' : '⬇️  Rebaixamento Registrado';
+  const erros  = [];
+
+  // Aplica as mudanças no membro
+  let membro;
+  try {
+    membro = await interaction.guild.members.fetch(p.membroId);
+  } catch {
+    await interaction.editReply({ content: '❌ Membro não encontrado no servidor.' });
+    return;
+  }
+
+  try { await membro.roles.remove(p.cargoAntesId); } catch { erros.push('remover cargo anterior'); }
+  try { await membro.roles.add(p.cargoNovoId); }    catch { erros.push('adicionar novo cargo'); }
+  try { await membro.setNickname(apelido); }         catch { erros.push('renomear membro'); }
 
   const text =
     `## ${titulo}\n\n` +
     `👤 **Membro:** <@${p.membroId}>\n` +
-    `📌 **Cargo anterior:** <@&${p.cargoAntesId}>\n` +
-    `${isUp ? '⬆️' : '⬇️'} **Novo cargo:** <@&${p.cargoNovoId}>\n` +
+    `🏷️ **Novo apelido:** \`${apelido}\`\n` +
+    `📌 **Cargo removido:** <@&${p.cargoAntesId}>\n` +
+    `${isUp ? '⬆️' : '⬇️'} **Cargo adicionado:** <@&${p.cargoNovoId}>\n` +
     `📋 **Motivo:** ${motivo}\n\n` +
     `📝 Registrado por <@${interaction.user.id}>  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
 
@@ -176,7 +205,9 @@ async function handleModalUpDown(interaction, tipo) {
       console.error(`[updown] Erro ao enviar log:`, err.message);
     }
   }
-  await interaction.editReply({ content: `${isUp ? '⬆️' : '⬇️'} Registro enviado com sucesso!` });
+
+  const avisoErros = erros.length > 0 ? `\n⚠️ Não foi possível: ${erros.join(', ')} (verifique as permissões do bot).` : '';
+  await interaction.editReply({ content: `${isUp ? '⬆️' : '⬇️'} Registro concluído!${avisoErros}` });
 }
 
 module.exports = {
