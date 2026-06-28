@@ -26,6 +26,10 @@ const SECOES = [
   { value: 'ranking',      label: 'Ranking',                   emoji: '📊', description: 'Canal de ranking' },
   { value: 'logs',         label: 'Logs',                      emoji: '📝', description: 'Canais de log' },
   { value: 'advertencias', label: 'Advertências',              emoji: '⚠️', description: 'Cargos por nível de warn' },
+  { value: 'pd',           label: 'PD',                        emoji: '📋', description: 'Canal e log de PD' },
+  { value: 'updown',       label: 'Up / Rebaixamento',         emoji: '⬆️', description: 'Canal e log de up/rebaixamento' },
+  { value: 'estoque',      label: 'Estoque',                   emoji: '📦', description: 'Canais, cargos e sistema de estoque' },
+  { value: 'adv_esc',      label: 'ADV Escalação',             emoji: '⛔', description: 'Cargo, canais e admins de advertência' },
   { value: 'setup',        label: 'Setup — Enviar Mensagens',  emoji: '🔧', description: 'Envia mensagens nos canais configurados' },
   { value: 'aparencia',   label: 'Aparência do Bot',          emoji: '🎨', description: 'Nome, avatar e imagem global padrão' },
   { value: 'textos',      label: 'Textos (modais e botões)',  emoji: '📝', description: 'Edita títulos, campos e botões dos formulários' },
@@ -336,6 +340,82 @@ function buildSecao(secao) {
       ],
     };
 
+    case 'pd': return {
+      embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
+        `## 📋 PD\n\n` +
+        `📺 **Canal Setup:** ${ch(c.CANAL_PD_BTN)}\n` +
+        `📬 **Canal Log:** ${ch(c.CANAL_PD_LOG)}\n\n` +
+        `**Painel:** ${c.PD_TITULO ?? 'REGISTRO DE PD'}  ·  🎨 #${(c.PD_COR ?? 0x5865F2).toString(16).padStart(6,'0').toUpperCase()}`,
+      ),
+      rows: [
+        new ActionRowBuilder().addComponents(
+          btn('cfg_ch_CANAL_PD_BTN', '📺 Canal Setup',         ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_PD_LOG', '📬 Canal Log',           ButtonStyle.Primary),
+          btn('cfg_painel_pd',       '✏️ Personalizar Painel', ButtonStyle.Secondary),
+        ),
+        new ActionRowBuilder().addComponents(btn('cfg_back', '← Menu', ButtonStyle.Danger)),
+      ],
+    };
+
+    case 'updown': return {
+      embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
+        `## ⬆️ Up / Rebaixamento\n\n` +
+        `📺 **Canal Setup:** ${ch(c.CANAL_UPDOWN_BTN)}\n` +
+        `📬 **Canal Log:** ${ch(c.CANAL_UPDOWN_LOG)}\n\n` +
+        `**Painel:** ${c.UPDOWN_TITULO ?? 'UP / REBAIXAMENTO'}  ·  🎨 #${(c.UPDOWN_COR ?? 0x5865F2).toString(16).padStart(6,'0').toUpperCase()}`,
+      ),
+      rows: [
+        new ActionRowBuilder().addComponents(
+          btn('cfg_ch_CANAL_UPDOWN_BTN', '📺 Canal Setup',         ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_UPDOWN_LOG', '📬 Canal Log',           ButtonStyle.Primary),
+          btn('cfg_painel_updown',       '✏️ Personalizar Painel', ButtonStyle.Secondary),
+        ),
+        new ActionRowBuilder().addComponents(btn('cfg_back', '← Menu', ButtonStyle.Danger)),
+      ],
+    };
+
+    case 'estoque': return {
+      embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
+        `## 📦 Estoque\n\n` +
+        `📺 **Canal Setup:** ${ch(c.CANAL_ESTOQUE_BTN)}\n` +
+        `📬 **Canal Log:** ${ch(c.CANAL_ESTOQUE_LOG)}\n` +
+        `👥 **Cargos Admin:** ${rls(c.CARGOS_ESTOQUE_ADM)}\n\n` +
+        `**Painel:** ${c.ESTOQUE_TITULO ?? 'ESTOQUE'}  ·  🎨 #${(c.ESTOQUE_COR ?? 0x5865F2).toString(16).padStart(6,'0').toUpperCase()}`,
+      ),
+      rows: [
+        new ActionRowBuilder().addComponents(
+          btn('cfg_ch_CANAL_ESTOQUE_BTN',     '📺 Canal Setup',         ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_ESTOQUE_LOG',     '📬 Canal Log',           ButtonStyle.Primary),
+          btn('cfg_roles_CARGOS_ESTOQUE_ADM', '👥 Cargos Admin',        ButtonStyle.Secondary),
+          btn('cfg_painel_estoque',           '✏️ Personalizar Painel', ButtonStyle.Secondary),
+        ),
+        new ActionRowBuilder().addComponents(btn('cfg_back', '← Menu', ButtonStyle.Danger)),
+      ],
+    };
+
+    case 'adv_esc': return {
+      embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
+        `## ⛔ ADV Escalação\n\n` +
+        `🏷️ **Cargo Suspensão:** ${rl(c.CARGO_ADV_ESC)}\n` +
+        `📺 **Canal Setup:** ${ch(c.CANAL_ADV_BTN)}\n` +
+        `📬 **Canal Log:** ${ch(c.CANAL_ADV_LOG)}\n` +
+        `👥 **Cargos Admin:** ${rls(c.CARGOS_ADV_ADM)}\n\n` +
+        `**Painel:** ${c.ADV_TITULO ?? 'ADVERTÊNCIAS DE ESCALAÇÃO'}  ·  🎨 #${(c.ADV_COR ?? 0xFEE75C).toString(16).padStart(6,'0').toUpperCase()}`,
+      ),
+      rows: [
+        new ActionRowBuilder().addComponents(
+          btn('cfg_role_CARGO_ADV_ESC',    '🏷️ Cargo Suspensão', ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_ADV_BTN',      '📺 Canal Setup',     ButtonStyle.Primary),
+          btn('cfg_ch_CANAL_ADV_LOG',      '📬 Canal Log',       ButtonStyle.Primary),
+        ),
+        new ActionRowBuilder().addComponents(
+          btn('cfg_roles_CARGOS_ADV_ADM', '👥 Cargos Admin',        ButtonStyle.Secondary),
+          btn('cfg_painel_adv_esc',       '✏️ Personalizar Painel', ButtonStyle.Secondary),
+          btn('cfg_back', '← Menu', ButtonStyle.Danger),
+        ),
+      ],
+    };
+
     case 'setup': return {
       embed: new EmbedBuilder().setColor(0x5865F2).setDescription(
         `## 🔧 Setup — Enviar Mensagens\n\n` +
@@ -355,6 +435,12 @@ function buildSecao(secao) {
           btn('cfg_setup_ticket',     '🎫 Ticket',     ButtonStyle.Success),
           btn('cfg_setup_ranking',    '📊 Ranking',    ButtonStyle.Success),
           btn('cfg_setup_codiguinho', '🎟️ Codiguinho', ButtonStyle.Success),
+        ),
+        new ActionRowBuilder().addComponents(
+          btn('cfg_setup_pd',      '📋 PD',             ButtonStyle.Success),
+          btn('cfg_setup_updown',  '⬆️ Up/Rebaixamento', ButtonStyle.Success),
+          btn('cfg_setup_estoque', '📦 Estoque',         ButtonStyle.Success),
+          btn('cfg_setup_adv',     '⛔ ADV Escalação',   ButtonStyle.Success),
         ),
         new ActionRowBuilder().addComponents(btn('cfg_back', '← Menu', ButtonStyle.Danger)),
       ],
@@ -634,6 +720,10 @@ const PAINEL_KEYS = {
   codiguinho:   { titulo: 'CODIGUINHO_TITULO',   desc: 'CODIGUINHO_DESC',   cor: 'CODIGUINHO_COR',   btnKey: 'CODIGUINHO_BTN',   imgKey: null },
   ticket:       { titulo: 'TICKET_TITULO',       desc: 'TICKET_DESC',       cor: 'TICKET_COR',       btnKey: null,               imgKey: 'TICKET_IMG' },
   ausencia:     { titulo: 'AUSENCIA_TITULO',     desc: 'AUSENCIA_DESC',     cor: 'AUSENCIA_COR',     btnKey: 'AUSENCIA_BTN',     imgKey: 'AUSENCIA_IMG' },
+  pd:           { titulo: 'PD_TITULO',           desc: 'PD_DESC',           cor: 'PD_COR',           btnKey: 'PD_BTN',           imgKey: null },
+  updown:       { titulo: 'UPDOWN_TITULO',       desc: 'UPDOWN_DESC',       cor: 'UPDOWN_COR',       btnKey: null,               imgKey: null },
+  estoque:      { titulo: 'ESTOQUE_TITULO',       desc: 'ESTOQUE_DESC',     cor: 'ESTOQUE_COR',      btnKey: null,               imgKey: null },
+  adv_esc:      { titulo: 'ADV_TITULO',           desc: 'ADV_DESC',         cor: 'ADV_COR',          btnKey: 'ADV_BTN',          imgKey: null },
 };
 
 async function handleConfigPainelBtn(interaction, modulo) {
@@ -759,6 +849,10 @@ async function handleConfigSetup(interaction, modulo, client) {
     ranking:      () => require('./ranking').handleRankingSetup(client, guild),
     codiguinho:   () => require('./codiguinho').handleCodiguinhoChannel(client, guild),
     ausencia:     () => require('./ausencia').handleAusenciaSetup(client, guild),
+    pd:           () => require('./pd').handlePdChannel(client, guild),
+    updown:       () => require('./updown').handleUpDownChannel(client, guild),
+    estoque:      () => require('./estoque').handleEstoqueChannel(client, guild),
+    adv:          () => require('./adv').handleAdvChannel(client, guild),
   };
 
   const fn = mapa[modulo];
