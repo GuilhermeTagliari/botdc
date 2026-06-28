@@ -3,6 +3,7 @@ const {
   ModalBuilder, TextInputBuilder, TextInputStyle,
   UserSelectMenuBuilder,
   ContainerBuilder, TextDisplayBuilder, SeparatorBuilder,
+  MediaGalleryBuilder, MediaGalleryItemBuilder,
   MessageFlags,
 } = require('discord.js');
 const config = require('../config');
@@ -93,6 +94,10 @@ async function handleAdvChannel(client, guild) {
 
   const container = new ContainerBuilder()
     .setAccentColor(config.ADV_COR ?? 0xFEE75C)
+    .addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(config.getImg('ADV'))),
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(`# ${config.ADV_TITULO ?? 'ADVERTÊNCIAS DE ESCALAÇÃO'}\n\n${config.ADV_DESC ?? 'Registre suspensões de participação em escalações.'}`),
     )

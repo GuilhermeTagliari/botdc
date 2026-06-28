@@ -2,6 +2,7 @@ const {
   ButtonBuilder, ButtonStyle, ActionRowBuilder,
   ModalBuilder, TextInputBuilder, TextInputStyle,
   ContainerBuilder, TextDisplayBuilder, SeparatorBuilder,
+  MediaGalleryBuilder, MediaGalleryItemBuilder,
   MessageFlags,
 } = require('discord.js');
 const config = require('../config');
@@ -13,6 +14,10 @@ async function handlePdChannel(client, guild) {
 
   const container = new ContainerBuilder()
     .setAccentColor(config.PD_COR ?? 0xED4245)
+    .addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(config.getImg('PD'))),
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(`# ${config.PD_TITULO ?? 'PEDIDO DE DESLIGAMENTO'}\n\n${config.PD_DESC ?? 'Registre um pedido de desligamento clicando no botão abaixo.'}`),
     )

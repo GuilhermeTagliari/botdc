@@ -105,7 +105,7 @@ const {
 } = require('./handlers/codiguinho');
 const { handleArmasChannel, handleArmasBotao, handleModalArmas, handleArmasAprovar, handleArmasRecusar } = require('./handlers/armas');
 const { handlePdChannel, handlePdBotao, handleModalPd } = require('./handlers/pd');
-const { handleUpDownChannel, handleUpBtn, handleDownBtn, handleModalUpDown } = require('./handlers/updown');
+const { handleUpDownChannel, handleUpBtn, handleDownBtn, handleUpDownSelMembro, handleUpDownSelAntes, handleUpDownSelNovo, handleUpDownConfirm, handleModalUpDown } = require('./handlers/updown');
 const { carregarEstoque, handleEstoqueChannel, handleEstoqueEntradaItemBtn, handleEstoqueSaidaItemBtn, handleEstoqueEntradaCaixaBtn, handleEstoqueSaidaCaixaBtn, handleEstoqueVerBtn, handleModalEstoqueEntradaItem, handleModalEstoqueSaidaItem, handleModalEstoqueEntradaCaixa, handleModalEstoqueSaidaCaixa } = require('./handlers/estoque');
 const { carregarAdvs, restaurarAdvs, handleAdvChannel, handleAdvAplicarBtn, handleAdvMembroSel, handleModalAdv } = require('./handlers/adv');
 const {
@@ -997,6 +997,10 @@ client.on('interactionCreate', async (interaction) => {
         await handleConfigRolesAdd(interaction, interaction.customId.slice('cfg_roles_add_'.length));
       } else if (interaction.customId.startsWith('cfg_roles_rm_')) {
         await handleConfigRolesRm(interaction, interaction.customId.slice('cfg_roles_rm_'.length));
+      } else if (interaction.customId.startsWith('updown_sel_antes_')) {
+        await handleUpDownSelAntes(interaction, interaction.customId.slice('updown_sel_antes_'.length));
+      } else if (interaction.customId.startsWith('updown_sel_novo_')) {
+        await handleUpDownSelNovo(interaction, interaction.customId.slice('updown_sel_novo_'.length));
       }
       return;
     }
@@ -1011,6 +1015,8 @@ client.on('interactionCreate', async (interaction) => {
         await handleTicketAddSelect(interaction, interaction.customId.slice('ticket_add_select_'.length));
       } else if (interaction.customId === 'adv_sel_membro') {
         await handleAdvMembroSel(interaction);
+      } else if (interaction.customId.startsWith('updown_sel_membro_')) {
+        await handleUpDownSelMembro(interaction, interaction.customId.slice('updown_sel_membro_'.length));
       }
       return;
     }
@@ -1106,6 +1112,8 @@ client.on('interactionCreate', async (interaction) => {
         await handleUpBtn(interaction);
       } else if (customId === 'updown_down') {
         await handleDownBtn(interaction);
+      } else if (customId.startsWith('updown_confirm_')) {
+        await handleUpDownConfirm(interaction, customId.slice('updown_confirm_'.length));
       } else if (customId === 'est_entrada_item') {
         await handleEstoqueEntradaItemBtn(interaction);
       } else if (customId === 'est_saida_item') {

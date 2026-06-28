@@ -2,6 +2,7 @@ const {
   ButtonBuilder, ButtonStyle, ActionRowBuilder,
   ModalBuilder, TextInputBuilder, TextInputStyle,
   ContainerBuilder, TextDisplayBuilder, SeparatorBuilder,
+  MediaGalleryBuilder, MediaGalleryItemBuilder,
   MessageFlags,
 } = require('discord.js');
 const config = require('../config');
@@ -43,6 +44,10 @@ async function handleEstoqueChannel(client, guild) {
 
   const container = new ContainerBuilder()
     .setAccentColor(config.ESTOQUE_COR ?? 0x57F287)
+    .addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(config.getImg('ESTOQUE'))),
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(`# ${config.ESTOQUE_TITULO ?? 'ESTOQUE'}\n\n${config.ESTOQUE_DESC ?? 'Gerencie o estoque de itens e caixa da facção.'}`),
     )

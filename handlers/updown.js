@@ -1,10 +1,15 @@
 const {
   ButtonBuilder, ButtonStyle, ActionRowBuilder,
   ModalBuilder, TextInputBuilder, TextInputStyle,
+  UserSelectMenuBuilder, RoleSelectMenuBuilder,
   ContainerBuilder, TextDisplayBuilder, SeparatorBuilder,
+  MediaGalleryBuilder, MediaGalleryItemBuilder,
   MessageFlags,
 } = require('discord.js');
 const config = require('../config');
+
+// userId → { tipo, membroId, cargoAntesId, cargoNovoId }
+const pending = new Map();
 
 async function handleUpDownChannel(client, guild) {
   if (!config.CANAL_UPDOWN_BTN) return;
@@ -13,6 +18,10 @@ async function handleUpDownChannel(client, guild) {
 
   const container = new ContainerBuilder()
     .setAccentColor(config.UPDOWN_COR ?? 0x3498DB)
+    .addMediaGalleryComponents(
+      new MediaGalleryBuilder().addItems(new MediaGalleryItemBuilder().setURL(config.getImg('UPDOWN'))),
+    )
+    .addSeparatorComponents(new SeparatorBuilder().setDivider(true))
     .addTextDisplayComponents(
       new TextDisplayBuilder().setContent(`# ${config.UPDOWN_TITULO ?? 'UP / REBAIXAMENTO'}\n\n${config.UPDOWN_DESC ?? 'Registre promoções e rebaixamentos clicando nos botões abaixo.'}`),
     )
@@ -33,39 +42,91 @@ async function handleUpDownChannel(client, guild) {
   }
 }
 
-function buildModalUpDown(tipo) {
+function buildSelecaoMsg(userId, tipo) {
+  const p     = pending.get(userId) ?? {};
+  const isUp  = tipo === 'up';
+  const pronto = !!(p.membroId && p.cargoAntesId && p.cargoNovoId);
+
+  const linhas = [
+    `**${isUp ? '⬆️ Registrar Promoção' : '⬇️ Registrar Rebaixamento'}**\n`,
+    `👤 **Membro:** ${p.membroId ? `<@${p.membroId}>` : '`não selecionado`'}`,
+    `📌 **Cargo anterior:** ${p.cargoAntesId ? `<@&${p.cargoAntesId}>` : '`não selecionado`'}`,
+    `${isUp ? '⬆️' : '⬇️'} **Novo cargo:** ${p.cargoNovoId ? `<@&${p.cargoNovoId}>` : '`não selecionado`'}`,
+  ].join('\n');
+
+  return {
+    content: linhas,
+    components: [
+      new ActionRowBuilder().addComponents(
+        new UserSelectMenuBuilder()
+          .setCustomId(`updown_sel_membro_${tipo}`)
+          .setPlaceholder('1. Selecione o membro...'),
+      ),
+      new ActionRowBuilder().addComponents(
+        new RoleSelectMenuBuilder()
+          .setCustomId(`updown_sel_antes_${tipo}`)
+          .setPlaceholder('2. Cargo anterior...'),
+      ),
+      new ActionRowBuilder().addComponents(
+        new RoleSelectMenuBuilder()
+          .setCustomId(`updown_sel_novo_${tipo}`)
+          .setPlaceholder('3. Novo cargo...'),
+      ),
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`updown_confirm_${tipo}`)
+          .setLabel('✅ Confirmar e adicionar motivo')
+          .setStyle(ButtonStyle.Primary)
+          .setDisabled(!pronto),
+      ),
+    ],
+    ephemeral: true,
+  };
+}
+
+async function handleUpBtn(interaction) {
+  pending.set(interaction.user.id, { tipo: 'up' });
+  await interaction.reply(buildSelecaoMsg(interaction.user.id, 'up'));
+}
+
+async function handleDownBtn(interaction) {
+  pending.set(interaction.user.id, { tipo: 'down' });
+  await interaction.reply(buildSelecaoMsg(interaction.user.id, 'down'));
+}
+
+async function handleUpDownSelMembro(interaction, tipo) {
+  const p = pending.get(interaction.user.id) ?? { tipo };
+  p.membroId = interaction.values[0];
+  pending.set(interaction.user.id, p);
+  await interaction.update(buildSelecaoMsg(interaction.user.id, tipo));
+}
+
+async function handleUpDownSelAntes(interaction, tipo) {
+  const p = pending.get(interaction.user.id) ?? { tipo };
+  p.cargoAntesId = interaction.values[0];
+  pending.set(interaction.user.id, p);
+  await interaction.update(buildSelecaoMsg(interaction.user.id, tipo));
+}
+
+async function handleUpDownSelNovo(interaction, tipo) {
+  const p = pending.get(interaction.user.id) ?? { tipo };
+  p.cargoNovoId = interaction.values[0];
+  pending.set(interaction.user.id, p);
+  await interaction.update(buildSelecaoMsg(interaction.user.id, tipo));
+}
+
+async function handleUpDownConfirm(interaction, tipo) {
+  const p = pending.get(interaction.user.id);
+  if (!p?.membroId || !p?.cargoAntesId || !p?.cargoNovoId) {
+    await interaction.reply({ content: '❌ Selecione o membro e os dois cargos antes de confirmar.', ephemeral: true });
+    return;
+  }
+
   const isUp = tipo === 'up';
   const modal = new ModalBuilder()
     .setCustomId(`modal_updown_${tipo}`)
     .setTitle(isUp ? 'Registrar Promoção (Up)' : 'Registrar Rebaixamento');
   modal.addComponents(
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('ud_membro')
-        .setLabel('Membro (mencione ou escreva o nome)')
-        .setPlaceholder('Ex: @João ou João#1234')
-        .setStyle(TextInputStyle.Short)
-        .setMaxLength(100)
-        .setRequired(true),
-    ),
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('ud_cargo_antes')
-        .setLabel('Cargo anterior')
-        .setPlaceholder('Ex: Soldado Teste')
-        .setStyle(TextInputStyle.Short)
-        .setMaxLength(60)
-        .setRequired(true),
-    ),
-    new ActionRowBuilder().addComponents(
-      new TextInputBuilder()
-        .setCustomId('ud_cargo_novo')
-        .setLabel('Novo cargo')
-        .setPlaceholder('Ex: Soldado')
-        .setStyle(TextInputStyle.Short)
-        .setMaxLength(60)
-        .setRequired(true),
-    ),
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('ud_motivo')
@@ -76,28 +137,30 @@ function buildModalUpDown(tipo) {
         .setRequired(true),
     ),
   );
-  return modal;
+  await interaction.showModal(modal);
 }
-
-async function handleUpBtn(interaction)   { await interaction.showModal(buildModalUpDown('up')); }
-async function handleDownBtn(interaction) { await interaction.showModal(buildModalUpDown('down')); }
 
 async function handleModalUpDown(interaction, tipo) {
   await interaction.deferReply({ ephemeral: true });
-  const membro     = interaction.fields.getTextInputValue('ud_membro').trim();
-  const cargoAntes = interaction.fields.getTextInputValue('ud_cargo_antes').trim();
-  const cargoNovo  = interaction.fields.getTextInputValue('ud_cargo_novo').trim();
-  const motivo     = interaction.fields.getTextInputValue('ud_motivo').trim();
+  const motivo = interaction.fields.getTextInputValue('ud_motivo').trim();
 
-  const isUp = tipo === 'up';
-  const cor  = isUp ? 0x57F287 : 0xED4245;
+  const p = pending.get(interaction.user.id);
+  pending.delete(interaction.user.id);
+
+  if (!p?.membroId || !p?.cargoAntesId || !p?.cargoNovoId) {
+    await interaction.editReply({ content: '❌ Sessão expirada. Tente novamente clicando no botão.' });
+    return;
+  }
+
+  const isUp  = tipo === 'up';
+  const cor   = isUp ? 0x57F287 : 0xED4245;
   const titulo = isUp ? '⬆️  Promoção Registrada' : '⬇️  Rebaixamento Registrado';
 
   const text =
     `## ${titulo}\n\n` +
-    `👤 **Membro:** ${membro}\n` +
-    `📌 **Cargo anterior:** ${cargoAntes}\n` +
-    `${isUp ? '⬆️' : '⬇️'} **Novo cargo:** ${cargoNovo}\n` +
+    `👤 **Membro:** <@${p.membroId}>\n` +
+    `📌 **Cargo anterior:** <@&${p.cargoAntesId}>\n` +
+    `${isUp ? '⬆️' : '⬇️'} **Novo cargo:** <@&${p.cargoNovoId}>\n` +
     `📋 **Motivo:** ${motivo}\n\n` +
     `📝 Registrado por <@${interaction.user.id}>  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
 
@@ -116,4 +179,13 @@ async function handleModalUpDown(interaction, tipo) {
   await interaction.editReply({ content: `${isUp ? '⬆️' : '⬇️'} Registro enviado com sucesso!` });
 }
 
-module.exports = { handleUpDownChannel, handleUpBtn, handleDownBtn, handleModalUpDown };
+module.exports = {
+  handleUpDownChannel,
+  handleUpBtn,
+  handleDownBtn,
+  handleUpDownSelMembro,
+  handleUpDownSelAntes,
+  handleUpDownSelNovo,
+  handleUpDownConfirm,
+  handleModalUpDown,
+};

@@ -724,10 +724,10 @@ const PAINEL_KEYS = {
   codiguinho:   { titulo: 'CODIGUINHO_TITULO',   desc: 'CODIGUINHO_DESC',   cor: 'CODIGUINHO_COR',   btnKey: 'CODIGUINHO_BTN',   imgKey: null },
   ticket:       { titulo: 'TICKET_TITULO',       desc: 'TICKET_DESC',       cor: 'TICKET_COR',       btnKey: null,               imgKey: 'TICKET_IMG' },
   ausencia:     { titulo: 'AUSENCIA_TITULO',     desc: 'AUSENCIA_DESC',     cor: 'AUSENCIA_COR',     btnKey: 'AUSENCIA_BTN',     imgKey: 'AUSENCIA_IMG' },
-  pd:           { titulo: 'PD_TITULO',           desc: 'PD_DESC',           cor: 'PD_COR',           btnKey: 'PD_BTN',           imgKey: null },
-  updown:       { titulo: 'UPDOWN_TITULO',       desc: 'UPDOWN_DESC',       cor: 'UPDOWN_COR',       btnKey: null,               imgKey: null },
-  estoque:      { titulo: 'ESTOQUE_TITULO',       desc: 'ESTOQUE_DESC',     cor: 'ESTOQUE_COR',      btnKey: null,               imgKey: null },
-  adv_esc:      { titulo: 'ADV_TITULO',           desc: 'ADV_DESC',         cor: 'ADV_COR',          btnKey: 'ADV_BTN',          imgKey: null },
+  pd:           { titulo: 'PD_TITULO',           desc: 'PD_DESC',           cor: 'PD_COR',           btnKey: 'PD_BTN',           imgKey: 'PD_IMG'      },
+  updown:       { titulo: 'UPDOWN_TITULO',       desc: 'UPDOWN_DESC',       cor: 'UPDOWN_COR',       btnKey: null,               imgKey: 'UPDOWN_IMG'  },
+  estoque:      { titulo: 'ESTOQUE_TITULO',      desc: 'ESTOQUE_DESC',      cor: 'ESTOQUE_COR',      btnKey: null,               imgKey: 'ESTOQUE_IMG' },
+  adv_esc:      { titulo: 'ADV_TITULO',          desc: 'ADV_DESC',          cor: 'ADV_COR',          btnKey: 'ADV_BTN',          imgKey: 'ADV_IMG'     },
 };
 
 async function handleConfigPainelBtn(interaction, modulo) {

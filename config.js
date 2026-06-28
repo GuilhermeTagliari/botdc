@@ -166,6 +166,10 @@ const config = {
   ARMAS_IMG:         null,
   AUSENCIA_IMG:      null,
   TICKET_IMG:        null,
+  PD_IMG:            null,
+  UPDOWN_IMG:        null,
+  ESTOQUE_IMG:       null,
+  ADV_IMG:           null,
 
   // ─── Recrutamento ─────────────────────────────────────────
   RECRUTAMENTO_TITULO: 'RECRUTAMENTO',
