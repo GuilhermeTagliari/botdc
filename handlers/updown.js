@@ -135,11 +135,11 @@ async function handleUpDownConfirm(interaction, tipo) {
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
         .setCustomId('ud_apelido')
-        .setLabel('Novo apelido do membro')
+        .setLabel('Novo apelido do membro (opcional)')
         .setPlaceholder('Ex: 1234 | João Silva')
         .setStyle(TextInputStyle.Short)
         .setMaxLength(32)
-        .setRequired(true),
+        .setRequired(false),
     ),
     new ActionRowBuilder().addComponents(
       new TextInputBuilder()
@@ -183,7 +183,7 @@ async function handleModalUpDown(interaction, tipo) {
 
   if (p.cargoAntesId) { try { await membro.roles.remove(p.cargoAntesId); } catch { erros.push('remover cargo anterior'); } }
   if (p.cargoNovoId)  { try { await membro.roles.add(p.cargoNovoId); }    catch { erros.push('adicionar novo cargo'); } }
-  try { await membro.setNickname(apelido); }         catch { erros.push('renomear membro'); }
+  if (apelido) { try { await membro.setNickname(apelido); } catch { erros.push('renomear membro'); } }
 
   const linhaAntes = p.cargoAntesId ? `\n📌 **Cargo removido:** <@&${p.cargoAntesId}>` : '';
   const linhaNovo  = p.cargoNovoId  ? `\n${isUp ? '⬆️' : '⬇️'} **Cargo adicionado:** <@&${p.cargoNovoId}>` : '';
@@ -191,7 +191,7 @@ async function handleModalUpDown(interaction, tipo) {
   const text =
     `## ${titulo}\n\n` +
     `👤 **Membro:** <@${p.membroId}>\n` +
-    `🏷️ **Novo apelido:** \`${apelido}\`` +
+    (apelido ? `🏷️ **Novo apelido:** \`${apelido}\`\n` : '') +
     linhaAntes + linhaNovo + `\n` +
     `📋 **Motivo:** ${motivo}\n\n` +
     `📝 Registrado por <@${interaction.user.id}>  ·  <t:${Math.floor(Date.now() / 1000)}:f>`;
